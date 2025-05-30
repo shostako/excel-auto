@@ -1,0 +1,29 @@
+# 一時ファイル
+*.swp
+*.tmp
+~$*
+
+# 変換済みファイル（元のソースはsrc/に保管）
+converted/
+
+# 監視スクリプトのPIDファイル
+.watch_pid
+
+# ログファイル
+*.log
+
+# バックアップファイル
+*.bak
+*~
+
+# Windowsのシステムファイル
+Thumbs.db
+Desktop.ini
+
+# macOSのシステムファイル
+.DS_Store
+
+# テスト用の一時ファイル
+test/*.xlsx
+test/*.xlsm
+test/output/
