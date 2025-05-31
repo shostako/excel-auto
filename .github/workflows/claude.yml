@@ -33,9 +33,7 @@ jobs:
           claude_access_token: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
           claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
-          branch_prefix: 'claude/'
-          commit_message_prefix: '[Claude] '
-          max_tool_calls: 20
+          github_token: ${{ github.token }}
           allowed_tools: |
             - read_file
             - write_file
