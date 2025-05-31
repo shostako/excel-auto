@@ -1,5 +1,5 @@
-Attribute VB_Name = "m転記_集計表_TG作業者別"
-Sub 転記_集計表_TG作業者別()
+Attribute VB_Name = "m転記_集計表_加工作業者別"
+Sub 転記_集計表_加工作業者別()
     ' 変数宣言
     Dim wsTarget As Worksheet
     Dim wsSource As Worksheet
@@ -33,7 +33,7 @@ Sub 転記_集計表_TG作業者別()
     Application.EnableEvents = False
     
     ' 進捗表示開始
-    Application.StatusBar = "TG作業者別データの転記処理を開始します..."
+    Application.StatusBar = "加工作業者別データの転記処理を開始します..."
     
     ' 集計表シート取得
     On Error Resume Next
@@ -51,27 +51,27 @@ Sub 転記_集計表_TG作業者別()
     End If
     targetDate = wsTarget.Range("A1").Value
     
-    ' TG作業者別シート取得
+    ' 加工作業者別シート取得
     On Error Resume Next
-    Set wsSource = ThisWorkbook.Worksheets("TG作業者別")
+    Set wsSource = ThisWorkbook.Worksheets("加工作業者別")
     If wsSource Is Nothing Then
-        MsgBox "「TG作業者別」シートが見つかりません。", vbCritical, "シートエラー"
+        MsgBox "「加工作業者別」シートが見つかりません。", vbCritical, "シートエラー"
         GoTo CleanupAndExit
     End If
     On Error GoTo ErrorHandler
     
     ' ソーステーブル取得
     On Error Resume Next
-    Set sourceTable = wsSource.ListObjects("_TG作業者別b")
+    Set sourceTable = wsSource.ListObjects("_加工作業者別b")
     If sourceTable Is Nothing Then
-        MsgBox "「TG作業者別」シートに「_TG作業者別b」テーブルが見つかりません。", vbCritical, "テーブルエラー"
+        MsgBox "「加工作業者別」シートに「_加工作業者別b」テーブルが見つかりません。", vbCritical, "テーブルエラー"
         GoTo CleanupAndExit
     End If
     On Error GoTo ErrorHandler
     
     ' データ範囲取得
     If sourceTable.DataBodyRange Is Nothing Then
-        MsgBox "「_TG作業者別b」テーブルにデータがありません。", vbCritical, "データエラー"
+        MsgBox "「_加工作業者別b」テーブルにデータがありません。", vbCritical, "データエラー"
         GoTo CleanupAndExit
     End If
     Set sourceData = sourceTable.DataBodyRange
@@ -81,7 +81,7 @@ Sub 転記_集計表_TG作業者別()
     On Error Resume Next
     dateColIndex = sourceTable.ListColumns("日付").Index
     If Err.Number <> 0 Then
-        MsgBox "「_TG作業者別b」テーブルに「日付」列が見つかりません。", vbCritical, "列エラー"
+        MsgBox "「_加工作業者別b」テーブルに「日付」列が見つかりません。", vbCritical, "列エラー"
         GoTo CleanupAndExit
     End If
     On Error GoTo ErrorHandler
@@ -119,7 +119,7 @@ Sub 転記_集計表_TG作業者別()
         
         ' 空白セルはスキップ
         If workerName <> "" Then
-            Application.StatusBar = "TG作業者別データ転記中... (" & workerName & ")"
+            Application.StatusBar = "加工作業者別データ転記中... (" & workerName & ")"
             
             ' 各末尾との組み合わせで転記
             For k = 0 To UBound(suffixList)
@@ -154,7 +154,7 @@ Sub 転記_集計表_TG作業者別()
             
                 ' 進捗更新
                 If processedCombinations Mod 5 = 0 Then
-                    Application.StatusBar = "TG作業者別データ転記中... (" & _
+                    Application.StatusBar = "加工作業者別データ転記中... (" & _
                         processedCombinations & "/" & totalCombinations & ")"
                 End If
             Next k

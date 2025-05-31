@@ -1,5 +1,5 @@
-Attribute VB_Name = "m転記_集計表_TG作業者別"
-Sub 転記_集計表_TG作業者別()
+Attribute VB_Name = "m転記_集計表_加工品番別"
+Sub 転記_集計表_加工品番別()
     ' 変数宣言
     Dim wsTarget As Worksheet
     Dim wsSource As Worksheet
@@ -11,18 +11,23 @@ Sub 転記_集計表_TG作業者別()
     Dim totalCombinations As Long
     Dim processedCombinations As Long
     
+    ' 品番接頭辞の配列
+    Dim prefixList() As Variant
+    prefixList = Array("アルヴェルF", "アルヴェルR", "ノアヴォクF", "ノアヴォクR", "補給品", "合計")
+    
     ' 転記元列名末尾の配列
     Dim suffixList() As Variant
-    suffixList = Array("実績", "日出来高ｻｲｸﾙ", "日時間当り出来高", "累計", _
-                      "日平均実績", "平均出来高ｻｲｸﾙ", "平均時間当り数")
+    suffixList = Array("日実績", "日出来高ｻｲｸﾙ", "累計実績", "平均実績", _
+                      "累計出来高ｻｲｸﾙ", "日不良実績", "累計不良数", _
+                      "累計不良率", "平均不良数")
     
     ' 転記先行番号の配列（suffixListに対応）
     Dim targetRows() As Variant
-    targetRows = Array(59, 60, 61, 62, 63, 64, 65)
+    targetRows = Array(46, 47, 48, 49, 50, 52, 53, 54, 55)
     
-    ' 作業者名を取得する列の配列（58行目）
-    Dim workerColumns() As Variant
-    workerColumns = Array(4, 6, 8, 10, 12, 14, 16)  ' D, F, H, J, L, N, P列
+    ' 品番に対応する転記先列の配列
+    Dim targetColumns() As Variant
+    targetColumns = Array(6, 8, 10, 12, 14, 16)  ' F, H, J, L, N, P列
     
     ' エラーハンドリング設定
     On Error GoTo ErrorHandler
@@ -33,7 +38,7 @@ Sub 転記_集計表_TG作業者別()
     Application.EnableEvents = False
     
     ' 進捗表示開始
-    Application.StatusBar = "TG作業者別データの転記処理を開始します..."
+    Application.StatusBar = "加工データの転記処理を開始します..."
     
     ' 集計表シート取得
     On Error Resume Next
@@ -51,27 +56,27 @@ Sub 転記_集計表_TG作業者別()
     End If
     targetDate = wsTarget.Range("A1").Value
     
-    ' TG作業者別シート取得
+    ' 加工品番別シート取得
     On Error Resume Next
-    Set wsSource = ThisWorkbook.Worksheets("TG作業者別")
+    Set wsSource = ThisWorkbook.Worksheets("加工品番別")
     If wsSource Is Nothing Then
-        MsgBox "「TG作業者別」シートが見つかりません。", vbCritical, "シートエラー"
+        MsgBox "「加工品番別」シートが見つかりません。", vbCritical, "シートエラー"
         GoTo CleanupAndExit
     End If
     On Error GoTo ErrorHandler
     
     ' ソーステーブル取得
     On Error Resume Next
-    Set sourceTable = wsSource.ListObjects("_TG作業者別b")
+    Set sourceTable = wsSource.ListObjects("_加工品番別b")
     If sourceTable Is Nothing Then
-        MsgBox "「TG作業者別」シートに「_TG作業者別b」テーブルが見つかりません。", vbCritical, "テーブルエラー"
+        MsgBox "「加工品番別」シートに「_加工品番別b」テーブルが見つかりません。", vbCritical, "テーブルエラー"
         GoTo CleanupAndExit
     End If
     On Error GoTo ErrorHandler
     
     ' データ範囲取得
     If sourceTable.DataBodyRange Is Nothing Then
-        MsgBox "「_TG作業者別b」テーブルにデータがありません。", vbCritical, "データエラー"
+        MsgBox "「_加工品番別b」テーブルにデータがありません。", vbCritical, "データエラー"
         GoTo CleanupAndExit
     End If
     Set sourceData = sourceTable.DataBodyRange
@@ -81,7 +86,7 @@ Sub 転記_集計表_TG作業者別()
     On Error Resume Next
     dateColIndex = sourceTable.ListColumns("日付").Index
     If Err.Number <> 0 Then
-        MsgBox "「_TG作業者別b」テーブルに「日付」列が見つかりません。", vbCritical, "列エラー"
+        MsgBox "「_加工品番別b」テーブルに「日付」列が見つかりません。", vbCritical, "列エラー"
         GoTo CleanupAndExit
     End If
     On Error GoTo ErrorHandler
@@ -100,34 +105,19 @@ Sub 転記_集計表_TG作業者別()
         GoTo CleanupAndExit
     End If
     
-    ' 各列の作業者名を取得して転記処理
-    totalCombinations = 0
+    ' 各品番と末尾の組み合わせで転記処理
+    totalCombinations = (UBound(prefixList) + 1) * (UBound(suffixList) + 1)
     processedCombinations = 0
     
-    ' まず総処理数をカウント（進捗表示用）
-    For i = 0 To UBound(workerColumns)
-        If wsTarget.Cells(58, workerColumns(i)).Value <> "" Then
-            totalCombinations = totalCombinations + (UBound(suffixList) + 1)
-        End If
-    Next i
-    
-    ' 各列の処理
-    For i = 0 To UBound(workerColumns)
-        ' 58行目から作業者名を取得
-        Dim workerName As String
-        workerName = CStr(wsTarget.Cells(58, workerColumns(i)).Value)
+    For i = 0 To UBound(prefixList)
+        Application.StatusBar = "加工データ転記中... (" & prefixList(i) & ")"
         
-        ' 空白セルはスキップ
-        If workerName <> "" Then
-            Application.StatusBar = "TG作業者別データ転記中... (" & workerName & ")"
-            
-            ' 各末尾との組み合わせで転記
-            For k = 0 To UBound(suffixList)
+        For k = 0 To UBound(suffixList)
             processedCombinations = processedCombinations + 1
             
-            ' 列名を構築（作業者名 + 末尾文字列）
+            ' 列名を構築（品番接頭辞 + 末尾文字列）
             Dim columnName As String
-            columnName = workerName & suffixList(k)
+            columnName = prefixList(i) & suffixList(k)
             
             ' 転記実行
             On Error Resume Next
@@ -141,9 +131,9 @@ Sub 転記_集計表_TG作業者別()
                 
                 ' 空白チェックと転記
                 If IsEmpty(sourceValue) Or sourceValue = "" Or IsNull(sourceValue) Then
-                    wsTarget.Cells(targetRows(k), workerColumns(i)).Value = 0
+                    wsTarget.Cells(targetRows(k), targetColumns(i)).Value = 0
                 Else
-                    wsTarget.Cells(targetRows(k), workerColumns(i)).Value = sourceValue
+                    wsTarget.Cells(targetRows(k), targetColumns(i)).Value = sourceValue
                 End If
             Else
                 ' 列が見つからない場合は警告（デバッグ用）
@@ -152,13 +142,12 @@ Sub 転記_集計表_TG作業者別()
             End If
             On Error GoTo ErrorHandler
             
-                ' 進捗更新
-                If processedCombinations Mod 5 = 0 Then
-                    Application.StatusBar = "TG作業者別データ転記中... (" & _
-                        processedCombinations & "/" & totalCombinations & ")"
-                End If
-            Next k
-        End If
+            ' 進捗更新（10件ごと）
+            If processedCombinations Mod 10 = 0 Then
+                Application.StatusBar = "加工データ転記中... (" & _
+                    processedCombinations & "/" & totalCombinations & ")"
+            End If
+        Next k
     Next i
     
     ' 正常終了（エラー時以外はメッセージ非表示）
