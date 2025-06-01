@@ -1,235 +1,191 @@
-Attribute VB_Name = "m“]‹L_ƒV[ƒg¬Œ`†‹@•Ê"
+Attribute VB_Name = "mè»¢è¨˜_ã‚·ãƒ¼ãƒˆæˆå½¢å·æ©Ÿåˆ¥"
 Option Explicit
 
-Sub “]‹L_ƒV[ƒg¬Œ`†‹@•Ê()
-    ' ‚‘¬‰»İ’è
-    Application.ScreenUpdating = False
-    Application.StatusBar = "¬Œ`†‹@•Ê“]‹Lˆ—‚ğŠJn..."
+' ==========================================
+' æˆå½¢å·æ©Ÿåˆ¥ã‹ã‚‰ã‚·ãƒ¼ãƒˆã¸ã®è»¢è¨˜ãƒã‚¯ãƒ­
+' ã€Œ_æˆå½¢å·æ©Ÿåˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰å„å·æ©Ÿã‚·ãƒ¼ãƒˆã¸ãƒ‡ãƒ¼ã‚¿ã‚’è»¢è¨˜
+' ==========================================
+Sub è»¢è¨˜_ã‚·ãƒ¼ãƒˆæˆå½¢å·æ©Ÿåˆ¥()
+    ' ==========================================
+    ' å¤‰æ•°å®£è¨€
+    ' ==========================================
+    Dim wsSource As Worksheet
+    Dim sourceTable As ListObject
+    Dim sourceData As Range
+    Dim i As Long, j As Long
+    Dim targetDate As Date
+    Dim targetSheet As Worksheet
+    Dim lastRow As Long
+    Dim foundRow As Long
+    Dim processedCount As Long
+    Dim totalRows As Long
     
+    ' å·æ©Ÿç•ªå·ãƒªã‚¹ãƒˆ
+    Dim machineList() As Variant
+    machineList = Array("SS01", "SS02", "SS03", "SS04", "SS05")
+    
+    ' ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°è¨­å®š
     On Error GoTo ErrorHandler
     
-    ' ƒe[ƒuƒ‹æ“¾
-    Dim ws As Worksheet
-    Set ws = ThisWorkbook.Worksheets("¬Œ`†‹@•Ê")
+    ' ==========================================
+    ' é«˜é€ŸåŒ–è¨­å®š
+    ' ==========================================
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    Application.EnableEvents = False
     
-    Dim srcTable As ListObject, tgtTable As ListObject
-    Set srcTable = ws.ListObjects("_¬Œ`†‹@•Êa")
-    Set tgtTable = ws.ListObjects("_¬Œ`†‹@•Êb")
+    ' é€²æ—è¡¨ç¤ºé–‹å§‹
+    Application.StatusBar = "æˆå½¢å·æ©Ÿåˆ¥ã‚·ãƒ¼ãƒˆè»¢è¨˜å‡¦ç†ã‚’é–‹å§‹ã—ã¾ã™..."
     
-    ' ƒf[ƒ^”ÍˆÍƒ`ƒFƒbƒN
-    If srcTable.DataBodyRange Is Nothing Then
-        Application.StatusBar = "ƒ\[ƒXƒe[ƒuƒ‹‚Éƒf[ƒ^‚È‚µ"
-        GoTo Cleanup
+    ' ==========================================
+    ' ã‚½ãƒ¼ã‚¹ã‚·ãƒ¼ãƒˆãƒ»ãƒ†ãƒ¼ãƒ–ãƒ«å–å¾—
+    ' ==========================================
+    ' æˆå½¢å·æ©Ÿåˆ¥ã‚·ãƒ¼ãƒˆå–å¾—
+    On Error Resume Next
+    Set wsSource = ThisWorkbook.Worksheets("æˆå½¢å·æ©Ÿåˆ¥")
+    If wsSource Is Nothing Then
+        MsgBox "ã€Œæˆå½¢å·æ©Ÿåˆ¥ã€ã‚·ãƒ¼ãƒˆãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚", vbCritical, "ã‚·ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼"
+        GoTo CleanupAndExit
     End If
+    On Error GoTo ErrorHandler
     
-    ' •K—v‚È—ñƒCƒ“ƒfƒbƒNƒXæ“¾iƒ\[ƒXj
-    Dim srcCols As Object
-    Set srcCols = CreateObject("Scripting.Dictionary")
-    srcCols("“ú•t") = srcTable.ListColumns("“ú•t").Index
-    srcCols("‹@ŠB") = srcTable.ListColumns("‹@ŠB").Index
-    srcCols("ÀÑ") = srcTable.ListColumns("ÀÑ").Index
-    srcCols("•s—Ç") = srcTable.ListColumns("•s—Ç").Index
-    srcCols("‰Ò“­ŠÔ") = srcTable.ListColumns("‰Ò“­ŠÔ").Index
-    
-    ' “]‹Læ‚Ì—ñƒCƒ“ƒfƒbƒNƒXæ“¾
-    Dim tgtCols As Object
-    Set tgtCols = CreateObject("Scripting.Dictionary")
-    tgtCols("“ú•t") = tgtTable.ListColumns("“ú•t").Index
-    
-    ' 1†‹@—p—ñ
-    tgtCols("1†‹@“úÀÑ") = GetColumnIndexSafe(tgtTable, "1†‹@“úÀÑ")
-    tgtCols("1†‹@“ú•s—ÇÀÑ") = GetColumnIndexSafe(tgtTable, "1†‹@“ú•s—ÇÀÑ")
-    tgtCols("1†‹@“ú‰Ò“­ŠÔ") = GetColumnIndexSafe(tgtTable, "1†‹@“ú‰Ò“­ŠÔ")
-    
-    ' 2†‹@—p—ñ
-    tgtCols("2†‹@“úÀÑ") = GetColumnIndexSafe(tgtTable, "2†‹@“úÀÑ")
-    tgtCols("2†‹@“ú•s—ÇÀÑ") = GetColumnIndexSafe(tgtTable, "2†‹@“ú•s—ÇÀÑ")
-    tgtCols("2†‹@“ú‰Ò“­ŠÔ") = GetColumnIndexSafe(tgtTable, "2†‹@“ú‰Ò“­ŠÔ")
-    
-    ' 3†‹@—p—ñ
-    tgtCols("3†‹@“úÀÑ") = GetColumnIndexSafe(tgtTable, "3†‹@“úÀÑ")
-    tgtCols("3†‹@“ú•s—ÇÀÑ") = GetColumnIndexSafe(tgtTable, "3†‹@“ú•s—ÇÀÑ")
-    tgtCols("3†‹@“ú‰Ò“­ŠÔ") = GetColumnIndexSafe(tgtTable, "3†‹@“ú‰Ò“­ŠÔ")
-    
-    ' 4†‹@—p—ñ
-    tgtCols("4†‹@“úÀÑ") = GetColumnIndexSafe(tgtTable, "4†‹@“úÀÑ")
-    tgtCols("4†‹@“ú•s—ÇÀÑ") = GetColumnIndexSafe(tgtTable, "4†‹@“ú•s—ÇÀÑ")
-    tgtCols("4†‹@“ú‰Ò“­ŠÔ") = GetColumnIndexSafe(tgtTable, "4†‹@“ú‰Ò“­ŠÔ")
-    
-    ' 5†‹@—p—ñ
-    tgtCols("5†‹@“úÀÑ") = GetColumnIndexSafe(tgtTable, "5†‹@“úÀÑ")
-    tgtCols("5†‹@“ú•s—ÇÀÑ") = GetColumnIndexSafe(tgtTable, "5†‹@“ú•s—ÇÀÑ")
-    tgtCols("5†‹@“ú‰Ò“­ŠÔ") = GetColumnIndexSafe(tgtTable, "5†‹@“ú‰Ò“­ŠÔ")
-    
-    ' ƒf[ƒ^“]‹Lˆ—
-    Dim srcData As Range, tgtData As Range
-    Set srcData = srcTable.DataBodyRange
-    Set tgtData = tgtTable.DataBodyRange
-    
-    If tgtData Is Nothing Then
-        Application.StatusBar = "“]‹Læƒe[ƒuƒ‹‚ª‹ó"
-        GoTo Cleanup
+    ' ã‚½ãƒ¼ã‚¹ãƒ†ãƒ¼ãƒ–ãƒ«å–å¾—
+    On Error Resume Next
+    Set sourceTable = wsSource.ListObjects("_æˆå½¢å·æ©Ÿåˆ¥a")
+    If sourceTable Is Nothing Then
+        MsgBox "ã€Œ_æˆå½¢å·æ©Ÿåˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚", vbCritical, "ãƒ†ãƒ¼ãƒ–ãƒ«ã‚¨ãƒ©ãƒ¼"
+        GoTo CleanupAndExit
     End If
+    On Error GoTo ErrorHandler
     
-    Dim i As Long, j As Long
-    Dim srcDate As Date, machine As String
-    Dim transferred As Long: transferred = 0
-    Dim totalRows As Long: totalRows = srcData.Rows.Count
+    ' ãƒ‡ãƒ¼ã‚¿ç¯„å›²å–å¾—
+    If sourceTable.DataBodyRange Is Nothing Then
+        MsgBox "ã€Œ_æˆå½¢å·æ©Ÿåˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ã«ãƒ‡ãƒ¼ã‚¿ãŒã‚ã‚Šã¾ã›ã‚“ã€‚", vbInformation, "ãƒ‡ãƒ¼ã‚¿ãªã—"
+        GoTo CleanupAndExit
+    End If
+    Set sourceData = sourceTable.DataBodyRange
     
-    ' “]‹Læƒe[ƒuƒ‹‚ğˆê’UƒNƒŠƒA
-    Application.StatusBar = "“]‹Læ‚ğƒNƒŠƒA’†..."
-    For j = 1 To tgtData.Rows.Count
-        ' 1†‹@—ñ‚ÌƒNƒŠƒA
-        If tgtCols("1†‹@“úÀÑ") > 0 Then tgtData.Cells(j, tgtCols("1†‹@“úÀÑ")).ClearContents
-        If tgtCols("1†‹@“ú•s—ÇÀÑ") > 0 Then tgtData.Cells(j, tgtCols("1†‹@“ú•s—ÇÀÑ")).ClearContents
-        If tgtCols("1†‹@“ú‰Ò“­ŠÔ") > 0 Then tgtData.Cells(j, tgtCols("1†‹@“ú‰Ò“­ŠÔ")).ClearContents
-        
-        ' 2†‹@—ñ‚ÌƒNƒŠƒA
-        If tgtCols("2†‹@“úÀÑ") > 0 Then tgtData.Cells(j, tgtCols("2†‹@“úÀÑ")).ClearContents
-        If tgtCols("2†‹@“ú•s—ÇÀÑ") > 0 Then tgtData.Cells(j, tgtCols("2†‹@“ú•s—ÇÀÑ")).ClearContents
-        If tgtCols("2†‹@“ú‰Ò“­ŠÔ") > 0 Then tgtData.Cells(j, tgtCols("2†‹@“ú‰Ò“­ŠÔ")).ClearContents
-        
-        ' 3†‹@—ñ‚ÌƒNƒŠƒA
-        If tgtCols("3†‹@“úÀÑ") > 0 Then tgtData.Cells(j, tgtCols("3†‹@“úÀÑ")).ClearContents
-        If tgtCols("3†‹@“ú•s—ÇÀÑ") > 0 Then tgtData.Cells(j, tgtCols("3†‹@“ú•s—ÇÀÑ")).ClearContents
-        If tgtCols("3†‹@“ú‰Ò“­ŠÔ") > 0 Then tgtData.Cells(j, tgtCols("3†‹@“ú‰Ò“­ŠÔ")).ClearContents
-        
-        ' 4†‹@—ñ‚ÌƒNƒŠƒA
-        If tgtCols("4†‹@“úÀÑ") > 0 Then tgtData.Cells(j, tgtCols("4†‹@“úÀÑ")).ClearContents
-        If tgtCols("4†‹@“ú•s—ÇÀÑ") > 0 Then tgtData.Cells(j, tgtCols("4†‹@“ú•s—ÇÀÑ")).ClearContents
-        If tgtCols("4†‹@“ú‰Ò“­ŠÔ") > 0 Then tgtData.Cells(j, tgtCols("4†‹@“ú‰Ò“­ŠÔ")).ClearContents
-        
-        ' 5†‹@—ñ‚ÌƒNƒŠƒA
-        If tgtCols("5†‹@“úÀÑ") > 0 Then tgtData.Cells(j, tgtCols("5†‹@“úÀÑ")).ClearContents
-        If tgtCols("5†‹@“ú•s—ÇÀÑ") > 0 Then tgtData.Cells(j, tgtCols("5†‹@“ú•s—ÇÀÑ")).ClearContents
-        If tgtCols("5†‹@“ú‰Ò“­ŠÔ") > 0 Then tgtData.Cells(j, tgtCols("5†‹@“ú‰Ò“­ŠÔ")).ClearContents
-    Next j
+    ' ==========================================
+    ' ãƒ¡ã‚¤ãƒ³å‡¦ç†: å„å·æ©Ÿã®ãƒ‡ãƒ¼ã‚¿ã‚’è»¢è¨˜
+    ' ==========================================
+    ' ç·å‡¦ç†æ•°ã‚’ã‚«ã‚¦ãƒ³ãƒˆï¼ˆé€²æ—è¡¨ç¤ºç”¨ï¼‰
+    totalRows = sourceData.Rows.Count * (UBound(machineList) + 1)
+    processedCount = 0
     
-    ' ‹@ŠB•Êƒf[ƒ^‚Ì“]‹L
-    For i = 1 To totalRows
-        ' i’»•\¦i10s‚²‚Æ‚ÉXV‚µ‚Äˆ—‘¬“x—Dæj
-        If i Mod 10 = 0 Or i = totalRows Then
-            Application.StatusBar = "¬Œ`†‹@•Ê“]‹Lˆ—’†... " & Format(i / totalRows, "0%") & _
-                                  " (" & i & "/" & totalRows & "s)"
-            DoEvents ' ‰æ–ÊXV
+    ' å„å·æ©Ÿã«ã¤ã„ã¦å‡¦ç†
+    Dim machineIndex As Long
+    For machineIndex = 0 To UBound(machineList)
+        Dim machineName As String
+        machineName = machineList(machineIndex)
+        
+        ' è»¢è¨˜å…ˆã‚·ãƒ¼ãƒˆã®å­˜åœ¨ç¢ºèª
+        On Error Resume Next
+        Set targetSheet = ThisWorkbook.Worksheets(machineName)
+        On Error GoTo ErrorHandler
+        
+        If targetSheet Is Nothing Then
+            Debug.Print "è­¦å‘Š: å·æ©Ÿã€Œ" & machineName & "ã€ã®ã‚·ãƒ¼ãƒˆãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚"
+            processedCount = processedCount + sourceData.Rows.Count
+            GoTo NextMachine
         End If
         
-        ' ƒ\[ƒXƒf[ƒ^æ“¾
-        srcDate = srcData.Cells(i, srcCols("“ú•t")).Value
-        machine = Trim(srcData.Cells(i, srcCols("‹@ŠB")).Value)
+        Application.StatusBar = "è»¢è¨˜å‡¦ç†ä¸­... (" & machineName & ")"
         
-        ' ‹@ŠB‚ª‘ÎÛŠO‚È‚çƒXƒLƒbƒv
-        If machine <> "SS01" And machine <> "SS02" And machine <> "SS03" And _
-           machine <> "SS04" And machine <> "SS05" Then
-            GoTo NextRow
-        End If
-        
-        ' “]‹Læ‚Ì“ú•tŒŸõ
-        For j = 1 To tgtData.Rows.Count
-            If tgtData.Cells(j, tgtCols("“ú•t")).Value = srcDate Then
-                ' ‹@ŠB‚É‰‚¶‚Ä“]‹L
-                Select Case machine
-                    Case "SS01"
-                        ' 1†‹@‚Ì“]‹L
-                        If tgtCols("1†‹@“úÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("1†‹@“úÀÑ")).Value = srcData.Cells(i, srcCols("ÀÑ")).Value
-                        End If
-                        If tgtCols("1†‹@“ú•s—ÇÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("1†‹@“ú•s—ÇÀÑ")).Value = srcData.Cells(i, srcCols("•s—Ç")).Value
-                        End If
-                        If tgtCols("1†‹@“ú‰Ò“­ŠÔ") > 0 Then
-                            tgtData.Cells(j, tgtCols("1†‹@“ú‰Ò“­ŠÔ")).Value = srcData.Cells(i, srcCols("‰Ò“­ŠÔ")).Value
-                        End If
-                        transferred = transferred + 1
-                        
-                    Case "SS02"
-                        ' 2†‹@‚Ì“]‹L
-                        If tgtCols("2†‹@“úÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("2†‹@“úÀÑ")).Value = srcData.Cells(i, srcCols("ÀÑ")).Value
-                        End If
-                        If tgtCols("2†‹@“ú•s—ÇÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("2†‹@“ú•s—ÇÀÑ")).Value = srcData.Cells(i, srcCols("•s—Ç")).Value
-                        End If
-                        If tgtCols("2†‹@“ú‰Ò“­ŠÔ") > 0 Then
-                            tgtData.Cells(j, tgtCols("2†‹@“ú‰Ò“­ŠÔ")).Value = srcData.Cells(i, srcCols("‰Ò“­ŠÔ")).Value
-                        End If
-                        transferred = transferred + 1
-                        
-                    Case "SS03"
-                        ' 3†‹@‚Ì“]‹L
-                        If tgtCols("3†‹@“úÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("3†‹@“úÀÑ")).Value = srcData.Cells(i, srcCols("ÀÑ")).Value
-                        End If
-                        If tgtCols("3†‹@“ú•s—ÇÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("3†‹@“ú•s—ÇÀÑ")).Value = srcData.Cells(i, srcCols("•s—Ç")).Value
-                        End If
-                        If tgtCols("3†‹@“ú‰Ò“­ŠÔ") > 0 Then
-                            tgtData.Cells(j, tgtCols("3†‹@“ú‰Ò“­ŠÔ")).Value = srcData.Cells(i, srcCols("‰Ò“­ŠÔ")).Value
-                        End If
-                        transferred = transferred + 1
-                        
-                    Case "SS04"
-                        ' 4†‹@‚Ì“]‹L
-                        If tgtCols("4†‹@“úÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("4†‹@“úÀÑ")).Value = srcData.Cells(i, srcCols("ÀÑ")).Value
-                        End If
-                        If tgtCols("4†‹@“ú•s—ÇÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("4†‹@“ú•s—ÇÀÑ")).Value = srcData.Cells(i, srcCols("•s—Ç")).Value
-                        End If
-                        If tgtCols("4†‹@“ú‰Ò“­ŠÔ") > 0 Then
-                            tgtData.Cells(j, tgtCols("4†‹@“ú‰Ò“­ŠÔ")).Value = srcData.Cells(i, srcCols("‰Ò“­ŠÔ")).Value
-                        End If
-                        transferred = transferred + 1
-                        
-                    Case "SS05"
-                        ' 5†‹@‚Ì“]‹L
-                        If tgtCols("5†‹@“úÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("5†‹@“úÀÑ")).Value = srcData.Cells(i, srcCols("ÀÑ")).Value
-                        End If
-                        If tgtCols("5†‹@“ú•s—ÇÀÑ") > 0 Then
-                            tgtData.Cells(j, tgtCols("5†‹@“ú•s—ÇÀÑ")).Value = srcData.Cells(i, srcCols("•s—Ç")).Value
-                        End If
-                        If tgtCols("5†‹@“ú‰Ò“­ŠÔ") > 0 Then
-                            tgtData.Cells(j, tgtCols("5†‹@“ú‰Ò“­ŠÔ")).Value = srcData.Cells(i, srcCols("‰Ò“­ŠÔ")).Value
-                        End If
-                        transferred = transferred + 1
-                End Select
-                
-                Exit For ' “ú•t‚ªŒ©‚Â‚©‚Á‚½‚çŸ‚Ìs‚Ö
+        ' å„æ—¥ä»˜ã®ãƒ‡ãƒ¼ã‚¿ã‚’å‡¦ç†
+        For i = 1 To sourceData.Rows.Count
+            processedCount = processedCount + 1
+            
+            ' æ—¥ä»˜ã‚’å–å¾—
+            targetDate = sourceData.Cells(i, 1).Value  ' æ—¥ä»˜åˆ—
+            
+            ' ç©ºç™½è¡Œã¯ã‚¹ã‚­ãƒƒãƒ—
+            If IsEmpty(targetDate) Then
+                GoTo NextDate
             End If
-        Next j
+            
+            ' è»¢è¨˜å…ˆã‚·ãƒ¼ãƒˆã§è©²å½“æ—¥ä»˜ã®è¡Œã‚’æ¤œç´¢
+            lastRow = targetSheet.Cells(targetSheet.Rows.Count, 1).End(xlUp).Row
+            foundRow = 0
+            
+            For j = 2 To lastRow  ' ãƒ˜ãƒƒãƒ€ãƒ¼è¡Œã‚’ã‚¹ã‚­ãƒƒãƒ—
+                If targetSheet.Cells(j, 1).Value = targetDate Then
+                    foundRow = j
+                    Exit For
+                End If
+            Next j
+            
+            ' è©²å½“æ—¥ä»˜ãŒè¦‹ã¤ã‹ã‚‰ãªã„å ´åˆã¯æ–°è¦è¡Œè¿½åŠ 
+            If foundRow = 0 Then
+                foundRow = lastRow + 1
+                targetSheet.Cells(foundRow, 1).Value = targetDate
+            End If
+            
+            ' ãƒ‡ãƒ¼ã‚¿è»¢è¨˜ï¼ˆå·æ©Ÿåˆ¥ã®ãƒ‡ãƒ¼ã‚¿ï¼‰
+            Select Case machineName
+                Case "SS01"
+                    ' SS01ã®ãƒ‡ãƒ¼ã‚¿è»¢è¨˜
+                    TransferMachineData sourceData, i, targetSheet, foundRow, 2
+                
+                Case "SS02"
+                    ' SS02ã®ãƒ‡ãƒ¼ã‚¿è»¢è¨˜
+                    TransferMachineData sourceData, i, targetSheet, foundRow, 6
+                
+                Case "SS03"
+                    ' SS03ã®ãƒ‡ãƒ¼ã‚¿è»¢è¨˜
+                    TransferMachineData sourceData, i, targetSheet, foundRow, 10
+                
+                Case "SS04"
+                    ' SS04ã®ãƒ‡ãƒ¼ã‚¿è»¢è¨˜
+                    TransferMachineData sourceData, i, targetSheet, foundRow, 14
+                
+                Case "SS05"
+                    ' SS05ã®ãƒ‡ãƒ¼ã‚¿è»¢è¨˜
+                    TransferMachineData sourceData, i, targetSheet, foundRow, 18
+            End Select
+            
+            ' é€²æ—æ›´æ–°
+            If processedCount Mod 10 = 0 Then
+                Application.StatusBar = "è»¢è¨˜å‡¦ç†ä¸­... (" & processedCount & "/" & totalRows & ")"
+            End If
+            
+NextDate:
+        Next i
         
-NextRow:
-    Next i
+NextMachine:
+        Set targetSheet = Nothing
+    Next machineIndex
     
-    ' Š®—¹‚ÌƒXƒe[ƒ^ƒXƒo[•\¦
-    Application.StatusBar = "¬Œ`†‹@•Ê“]‹LŠ®—¹: " & transferred & "Œ‚Ìƒf[ƒ^‚ğ“]‹L"
-    
-    ' 1•b‘Ò‹@‚µ‚Ä‚©‚çƒNƒŠƒA
-    Application.Wait Now + TimeValue("0:00:01")
-    Application.StatusBar = False
-    
-Cleanup:
-    Application.ScreenUpdating = True
-    Exit Sub
+    ' æ­£å¸¸çµ‚äº†
+    GoTo CleanupAndExit
     
 ErrorHandler:
-    ' ƒGƒ‰[‚¾‚¯ƒƒbƒZ[ƒWƒ{ƒbƒNƒX
-    MsgBox "¬Œ`†‹@•Ê“]‹Lˆ—‚ÅƒGƒ‰[”­¶" & vbCrLf & vbCrLf & _
-           "ƒGƒ‰[“à—e: " & Err.Description & vbCrLf & _
-           "ƒGƒ‰[”Ô†: " & Err.Number, vbCritical, "“]‹LƒGƒ‰["
+    ' ã‚¨ãƒ©ãƒ¼å‡¦ç†
+    MsgBox "è»¢è¨˜å‡¦ç†ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸã€‚" & vbCrLf & _
+           "ã‚¨ãƒ©ãƒ¼å†…å®¹: " & Err.Description & vbCrLf & _
+           "ã‚¨ãƒ©ãƒ¼ç•ªå·: " & Err.Number, vbCritical, "è»¢è¨˜ã‚¨ãƒ©ãƒ¼"
+    
+CleanupAndExit:
+    ' å¾Œå‡¦ç†
+    Application.EnableEvents = True
+    Application.Calculation = xlCalculationAutomatic
+    Application.ScreenUpdating = True
     Application.StatusBar = False
-    Resume Cleanup
 End Sub
 
-' —ñƒCƒ“ƒfƒbƒNƒX‚ğˆÀ‘S‚Éæ“¾‚·‚éƒwƒ‹ƒp[ŠÖ”
-Private Function GetColumnIndexSafe(tbl As ListObject, colName As String) As Long
-    On Error Resume Next
-    GetColumnIndexSafe = tbl.ListColumns(colName).Index
-    If Err.Number <> 0 Then
-        GetColumnIndexSafe = 0
-        Debug.Print "Œx: —ñu" & colName & "v‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ"
-    End If
-    On Error GoTo 0
-End Function
-
+' ==========================================
+' å·æ©Ÿãƒ‡ãƒ¼ã‚¿è»¢è¨˜ã‚µãƒ–ãƒ«ãƒ¼ãƒãƒ³
+' ==========================================
+Private Sub TransferMachineData(sourceData As Range, sourceRow As Long, _
+                               targetSheet As Worksheet, targetRow As Long, _
+                               startCol As Long)
+    ' å„é …ç›®ã®ãƒ‡ãƒ¼ã‚¿è»¢è¨˜ï¼ˆ4é …ç›®ï¼‰
+    Dim colOffset As Long
+    For colOffset = 0 To 3
+        If Not IsEmpty(sourceData.Cells(sourceRow, startCol + colOffset).Value) Then
+            targetSheet.Cells(targetRow, 2 + colOffset).Value = _
+                sourceData.Cells(sourceRow, startCol + colOffset).Value
+        Else
+            targetSheet.Cells(targetRow, 2 + colOffset).Value = 0
+        End If
+    Next colOffset
+End Sub

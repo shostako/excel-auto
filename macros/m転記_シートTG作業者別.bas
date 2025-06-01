@@ -1,125 +1,155 @@
-Attribute VB_Name = "m“]‹L_ƒV[ƒgTGì‹ÆÒ•Ê"
-Sub “]‹L_ƒV[ƒgTGì‹ÆÒ•Ê()
-    ' •Ï”éŒ¾
-    Dim ws As Worksheet
+Attribute VB_Name = "mè»¢è¨˜_ã‚·ãƒ¼ãƒˆTGä½œæ¥­è€…åˆ¥"
+Option Explicit
+
+' ==========================================
+' TGä½œæ¥­è€…åˆ¥ã‹ã‚‰ã‚·ãƒ¼ãƒˆã¸ã®è»¢è¨˜ãƒã‚¯ãƒ­
+' ã€Œ_TGä½œæ¥­è€…åˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰å„ä½œæ¥­è€…ã‚·ãƒ¼ãƒˆã¸ãƒ‡ãƒ¼ã‚¿ã‚’è»¢è¨˜
+' ==========================================
+Sub è»¢è¨˜_ã‚·ãƒ¼ãƒˆTGä½œæ¥­è€…åˆ¥()
+    ' ==========================================
+    ' å¤‰æ•°å®£è¨€
+    ' ==========================================
+    Dim wsSource As Worksheet
     Dim sourceTable As ListObject
-    Dim TargetTable As ListObject
     Dim sourceData As Range
-    Dim TargetData As Range
     Dim i As Long, j As Long
-    Dim sourceRow As Long, targetRow As Long
-    Dim sourceDate As Date, targetDate As Date
     Dim workerName As String
-    Dim workTimeColName As String, resultColName As String
-    Dim workTimeCol As ListColumn, resultCol As ListColumn
-    Dim workTimeColIndex As Long, resultColIndex As Long
-    Dim dateColSourceIndex As Long, dateColTargetIndex As Long
-    Dim workerColIndex As Long, workTimeSourceColIndex As Long, resultSourceColIndex As Long
-    Dim totalRows As Long
+    Dim targetSheet As Worksheet
+    Dim lastRow As Long
+    Dim foundRow As Long
+    Dim targetDate As Date
     Dim processedCount As Long
+    Dim totalWorkers As Long
     
-    ' ƒGƒ‰[ƒnƒ“ƒhƒŠƒ“ƒOİ’è
+    ' ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°è¨­å®š
     On Error GoTo ErrorHandler
     
-    ' i’»•\¦ŠJn
-    Application.StatusBar = "“]‹Lˆ—‚ğŠJn‚µ‚Ü‚·..."
+    ' ==========================================
+    ' é«˜é€ŸåŒ–è¨­å®š
+    ' ==========================================
     Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    Application.EnableEvents = False
     
-    ' ƒ[ƒNƒV[ƒgæ“¾
-    Set ws = ThisWorkbook.Worksheets("TGì‹ÆÒ•Ê")
+    ' é€²æ—è¡¨ç¤ºé–‹å§‹
+    Application.StatusBar = "TGä½œæ¥­è€…åˆ¥ã‚·ãƒ¼ãƒˆè»¢è¨˜å‡¦ç†ã‚’é–‹å§‹ã—ã¾ã™..."
     
-    ' ƒe[ƒuƒ‹æ“¾
-    Set sourceTable = ws.ListObjects("_TGì‹ÆÒ•Êa")
-    Set TargetTable = ws.ListObjects("_TGì‹ÆÒ•Êb")
+    ' ==========================================
+    ' ã‚½ãƒ¼ã‚¹ã‚·ãƒ¼ãƒˆãƒ»ãƒ†ãƒ¼ãƒ–ãƒ«å–å¾—
+    ' ==========================================
+    ' TGä½œæ¥­è€…åˆ¥ã‚·ãƒ¼ãƒˆå–å¾—
+    On Error Resume Next
+    Set wsSource = ThisWorkbook.Worksheets("TGä½œæ¥­è€…åˆ¥")
+    If wsSource Is Nothing Then
+        MsgBox "ã€ŒTGä½œæ¥­è€…åˆ¥ã€ã‚·ãƒ¼ãƒˆãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚", vbCritical, "ã‚·ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼"
+        GoTo CleanupAndExit
+    End If
+    On Error GoTo ErrorHandler
     
-    ' ƒf[ƒ^”ÍˆÍæ“¾iƒwƒbƒ_[œ‚­j
+    ' ã‚½ãƒ¼ã‚¹ãƒ†ãƒ¼ãƒ–ãƒ«å–å¾—
+    On Error Resume Next
+    Set sourceTable = wsSource.ListObjects("_TGä½œæ¥­è€…åˆ¥a")
+    If sourceTable Is Nothing Then
+        MsgBox "ã€Œ_TGä½œæ¥­è€…åˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚", vbCritical, "ãƒ†ãƒ¼ãƒ–ãƒ«ã‚¨ãƒ©ãƒ¼"
+        GoTo CleanupAndExit
+    End If
+    On Error GoTo ErrorHandler
+    
+    ' ãƒ‡ãƒ¼ã‚¿ç¯„å›²å–å¾—
+    If sourceTable.DataBodyRange Is Nothing Then
+        MsgBox "ã€Œ_TGä½œæ¥­è€…åˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ã«ãƒ‡ãƒ¼ã‚¿ãŒã‚ã‚Šã¾ã›ã‚“ã€‚", vbInformation, "ãƒ‡ãƒ¼ã‚¿ãªã—"
+        GoTo CleanupAndExit
+    End If
     Set sourceData = sourceTable.DataBodyRange
-    Set TargetData = TargetTable.DataBodyRange
     
-    ' —ñƒCƒ“ƒfƒbƒNƒXæ“¾
-    dateColSourceIndex = sourceTable.ListColumns("“ú•t").Index
-    dateColTargetIndex = TargetTable.ListColumns("“ú•t").Index
-    workerColIndex = sourceTable.ListColumns("ì‹ÆÒ").Index
-    workTimeSourceColIndex = sourceTable.ListColumns("‰Ò“­ŠÔ").Index
-    resultSourceColIndex = sourceTable.ListColumns("ÀÑ").Index
-    
-    ' ‘s”æ“¾
-    totalRows = sourceData.Rows.Count
+    ' ==========================================
+    ' ãƒ¡ã‚¤ãƒ³å‡¦ç†: å„ä½œæ¥­è€…ã®ãƒ‡ãƒ¼ã‚¿ã‚’è»¢è¨˜
+    ' ==========================================
+    ' ä½œæ¥­è€…æ•°ã‚’ã‚«ã‚¦ãƒ³ãƒˆï¼ˆé€²æ—è¡¨ç¤ºç”¨ï¼‰
+    totalWorkers = sourceData.Rows.Count
     processedCount = 0
     
-    ' ƒ\[ƒXƒe[ƒuƒ‹‚ÌŠes‚ğˆ—
-    For i = 1 To totalRows
-        ' i’»•\¦XV
-        processedCount = processedCount + 1
-        Application.StatusBar = "“]‹Lˆ—’†... (" & processedCount & "/" & totalRows & ")"
+    ' å„è¡Œï¼ˆä½œæ¥­è€…ï¼‰ã®ãƒ‡ãƒ¼ã‚¿ã‚’å‡¦ç†
+    For i = 1 To sourceData.Rows.Count
+        ' æ—¥ä»˜ã¨ä½œæ¥­è€…åã‚’å–å¾—
+        targetDate = sourceData.Cells(i, 1).Value  ' æ—¥ä»˜åˆ—
+        workerName = sourceData.Cells(i, 2).Value  ' ä½œæ¥­è€…åˆ—
         
-        ' ƒ\[ƒXƒf[ƒ^æ“¾
-        sourceDate = sourceData.Cells(i, dateColSourceIndex).Value
-        workerName = Trim(sourceData.Cells(i, workerColIndex).Value)
-        
-        ' ì‹ÆÒ–¼‚ª‹ó”’‚Ìê‡‚ÍƒXƒLƒbƒv
-        If workerName = "" Then
-            GoTo NextSourceRow
+        ' ç©ºç™½è¡Œã¯ã‚¹ã‚­ãƒƒãƒ—
+        If workerName = "" Or IsEmpty(workerName) Then
+            GoTo NextWorker
         End If
         
-        ' “]‹Læ‚Ì‘Î‰“ú•ts‚ğŒŸõ
-        targetRow = 0
-        For j = 1 To TargetData.Rows.Count
-            If TargetData.Cells(j, dateColTargetIndex).Value = sourceDate Then
-                targetRow = j
+        processedCount = processedCount + 1
+        Application.StatusBar = "è»¢è¨˜å‡¦ç†ä¸­... (" & processedCount & "/" & totalWorkers & ") " & workerName
+        
+        ' ä½œæ¥­è€…ã‚·ãƒ¼ãƒˆã®å­˜åœ¨ç¢ºèª
+        On Error Resume Next
+        Set targetSheet = ThisWorkbook.Worksheets(workerName)
+        On Error GoTo ErrorHandler
+        
+        If targetSheet Is Nothing Then
+            ' ã‚·ãƒ¼ãƒˆãŒå­˜åœ¨ã—ãªã„å ´åˆã¯ã‚¹ã‚­ãƒƒãƒ—ï¼ˆã‚¨ãƒ©ãƒ¼ã«ã¯ã—ãªã„ï¼‰
+            Debug.Print "è­¦å‘Š: ä½œæ¥­è€…ã€Œ" & workerName & "ã€ã®ã‚·ãƒ¼ãƒˆãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚"
+            GoTo NextWorker
+        End If
+        
+        ' è»¢è¨˜å…ˆã‚·ãƒ¼ãƒˆã§è©²å½“æ—¥ä»˜ã®è¡Œã‚’æ¤œç´¢
+        lastRow = targetSheet.Cells(targetSheet.Rows.Count, 1).End(xlUp).Row
+        foundRow = 0
+        
+        For j = 2 To lastRow  ' ãƒ˜ãƒƒãƒ€ãƒ¼è¡Œã‚’ã‚¹ã‚­ãƒƒãƒ—
+            If targetSheet.Cells(j, 1).Value = targetDate Then
+                foundRow = j
                 Exit For
             End If
         Next j
         
-        ' ‘Î‰‚·‚é“ú•t‚ªŒ©‚Â‚©‚ç‚È‚¢ê‡‚ÍƒXƒLƒbƒv
-        If targetRow = 0 Then
-            GoTo NextSourceRow
+        ' è©²å½“æ—¥ä»˜ãŒè¦‹ã¤ã‹ã‚‰ãªã„å ´åˆã¯æ–°è¦è¡Œè¿½åŠ 
+        If foundRow = 0 Then
+            foundRow = lastRow + 1
+            targetSheet.Cells(foundRow, 1).Value = targetDate
         End If
         
-        ' ‰Ò“­ŠÔ“]‹Lˆ—
-        workTimeColName = workerName & "‰Ò“­ŠÔ"
-        Set workTimeCol = Nothing
+        ' ãƒ‡ãƒ¼ã‚¿è»¢è¨˜ï¼ˆ3åˆ—ç›®ä»¥é™ã®ãƒ‡ãƒ¼ã‚¿ï¼‰
+        ' ç¨¼å‹•æ™‚é–“
+        If Not IsEmpty(sourceData.Cells(i, 3).Value) Then
+            targetSheet.Cells(foundRow, 2).Value = sourceData.Cells(i, 3).Value
+        End If
         
-        ' ‰Ò“­ŠÔ—ñ‚Ì‘¶İŠm”F
-        For Each workTimeCol In TargetTable.ListColumns
-            If workTimeCol.Name = workTimeColName Then
-                workTimeColIndex = workTimeCol.Index
-                ' ‰Ò“­ŠÔ’l‚ğ“]‹L
-                TargetData.Cells(targetRow, workTimeColIndex).Value = sourceData.Cells(i, workTimeSourceColIndex).Value
-                Exit For
-            End If
-        Next workTimeCol
+        ' æ®µå–æ™‚é–“
+        If Not IsEmpty(sourceData.Cells(i, 4).Value) Then
+            targetSheet.Cells(foundRow, 3).Value = sourceData.Cells(i, 4).Value
+        End If
         
-        ' ÀÑ“]‹Lˆ—
-        resultColName = workerName & "ÀÑ"
-        Set resultCol = Nothing
+        ' å®Ÿç¸¾
+        If Not IsEmpty(sourceData.Cells(i, 5).Value) Then
+            targetSheet.Cells(foundRow, 4).Value = sourceData.Cells(i, 5).Value
+        End If
         
-        ' ÀÑ—ñ‚Ì‘¶İŠm”F
-        For Each resultCol In TargetTable.ListColumns
-            If resultCol.Name = resultColName Then
-                resultColIndex = resultCol.Index
-                ' ÀÑ’l‚ğ“]‹L
-                TargetData.Cells(targetRow, resultColIndex).Value = sourceData.Cells(i, resultSourceColIndex).Value
-                Exit For
-            End If
-        Next resultCol
+        ' ä¸è‰¯
+        If Not IsEmpty(sourceData.Cells(i, 6).Value) Then
+            targetSheet.Cells(foundRow, 5).Value = sourceData.Cells(i, 6).Value
+        End If
         
-NextSourceRow:
+NextWorker:
+        Set targetSheet = Nothing
     Next i
     
-    ' ˆ—Š®—¹
-    Application.ScreenUpdating = True
-    Application.StatusBar = False
-    
-    Exit Sub
+    ' æ­£å¸¸çµ‚äº†
+    GoTo CleanupAndExit
     
 ErrorHandler:
-    ' ƒGƒ‰[‚Ìˆ—
+    ' ã‚¨ãƒ©ãƒ¼å‡¦ç†
+    MsgBox "è»¢è¨˜å‡¦ç†ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸã€‚" & vbCrLf & _
+           "ã‚¨ãƒ©ãƒ¼å†…å®¹: " & Err.Description & vbCrLf & _
+           "ã‚¨ãƒ©ãƒ¼ç•ªå·: " & Err.Number & vbCrLf & _
+           "å‡¦ç†ä¸­ã®ä½œæ¥­è€…: " & workerName, vbCritical, "è»¢è¨˜ã‚¨ãƒ©ãƒ¼"
+    
+CleanupAndExit:
+    ' å¾Œå‡¦ç†
+    Application.EnableEvents = True
+    Application.Calculation = xlCalculationAutomatic
     Application.ScreenUpdating = True
     Application.StatusBar = False
-    MsgBox "“]‹Lˆ—’†‚ÉƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½B" & vbCrLf & _
-           "ƒGƒ‰[“à—e: " & Err.Description & vbCrLf & _
-           "ƒGƒ‰[”Ô†: " & Err.Number, vbCritical, "“]‹LƒGƒ‰["
-    
 End Sub
-
