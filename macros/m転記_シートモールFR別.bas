@@ -1,217 +1,199 @@
-Attribute VB_Name = "m“]‹L_ƒV[ƒgƒ‚[ƒ‹FR•Ê"
+Attribute VB_Name = "mè»¢è¨˜_ã‚·ãƒ¼ãƒˆãƒ¢ãƒ¼ãƒ«FRåˆ¥"
 Option Explicit
 
-' ƒ‚[ƒ‹FR•Ê“]‹Lƒ}ƒNƒi’´‚‘¬”Åj
-' u_ƒ‚[ƒ‹FR•Êavƒe[ƒuƒ‹‚©‚çu_ƒ‚[ƒ‹FR•Êbvƒe[ƒuƒ‹‚Öƒf[ƒ^‚ğ“]‹L
-Sub “]‹L_ƒV[ƒgƒ‚[ƒ‹FR•Ê()
-    Dim wb As Workbook
-    Dim ws As Worksheet
-    Dim srcTable As ListObject
-    Dim tgtTable As ListObject
-    Dim srcData As Range
-    Dim tgtData As Range
-    Dim srcCols As Object
-    Dim tgtCols As Object
+' ==========================================
+' ãƒ¢ãƒ¼ãƒ«FRåˆ¥ã‹ã‚‰ã‚·ãƒ¼ãƒˆã¸ã®è»¢è¨˜ãƒã‚¯ãƒ­
+' ã€Œ_ãƒ¢ãƒ¼ãƒ«FRåˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ã‹ã‚‰F/Råˆ¥ã‚·ãƒ¼ãƒˆã¸ãƒ‡ãƒ¼ã‚¿ã‚’è»¢è¨˜
+' ==========================================
+Sub è»¢è¨˜_ã‚·ãƒ¼ãƒˆãƒ¢ãƒ¼ãƒ«FRåˆ¥()
+    ' ==========================================
+    ' å¤‰æ•°å®£è¨€
+    ' ==========================================
+    Dim wsSource As Worksheet
+    Dim sourceTable As ListObject
+    Dim sourceData As Range
+    Dim dateDict As Object
+    Dim i As Long, j As Long
+    Dim targetDate As Date
+    Dim targetSheet As Worksheet
+    Dim lastRow As Long
+    Dim foundRow As Long
+    Dim processedCount As Long
+    Dim totalRows As Long
     
-    ' Šî–{İ’è
-    Set wb = ThisWorkbook
+    ' F/Rç¨®åˆ¥ã®é…åˆ—
+    Dim frTypes() As Variant
+    Dim sheetNames() As Variant
+    frTypes = Array("ãƒ¢ãƒ¼ãƒ«F", "ãƒ¢ãƒ¼ãƒ«R")
+    sheetNames = Array("ãƒ¢ãƒ¼ãƒ«F", "ãƒ¢ãƒ¼ãƒ«R")
     
-    ' ‚‘¬‰»İ’èi‚±‚ê‚ªd—vIj
+    ' ã‚¨ãƒ©ãƒ¼ãƒãƒ³ãƒ‰ãƒªãƒ³ã‚°è¨­å®š
+    On Error GoTo ErrorHandler
+    
+    ' ==========================================
+    ' é«˜é€ŸåŒ–è¨­å®š
+    ' ==========================================
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
     Application.EnableEvents = False
     
-    ' ƒXƒe[ƒ^ƒXƒo[•\¦
-    Application.StatusBar = "ƒ‚[ƒ‹FR•Ê“]‹Lˆ—‚ğŠJn..."
+    ' é€²æ—è¡¨ç¤ºé–‹å§‹
+    Application.StatusBar = "ãƒ¢ãƒ¼ãƒ«FRåˆ¥ã‚·ãƒ¼ãƒˆè»¢è¨˜å‡¦ç†ã‚’é–‹å§‹ã—ã¾ã™..."
     
+    ' ==========================================
+    ' ã‚½ãƒ¼ã‚¹ã‚·ãƒ¼ãƒˆãƒ»ãƒ†ãƒ¼ãƒ–ãƒ«å–å¾—
+    ' ==========================================
+    ' ãƒ¢ãƒ¼ãƒ«FRåˆ¥ã‚·ãƒ¼ãƒˆå–å¾—
+    On Error Resume Next
+    Set wsSource = ThisWorkbook.Worksheets("ãƒ¢ãƒ¼ãƒ«FRåˆ¥")
+    If wsSource Is Nothing Then
+        MsgBox "ã€Œãƒ¢ãƒ¼ãƒ«FRåˆ¥ã€ã‚·ãƒ¼ãƒˆãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚", vbCritical, "ã‚·ãƒ¼ãƒˆã‚¨ãƒ©ãƒ¼"
+        GoTo CleanupAndExit
+    End If
     On Error GoTo ErrorHandler
     
-    ' ƒV[ƒgæ“¾iƒV[ƒg–¼‚Íuƒ‚[ƒ‹FR•Êv‚Æ‘z’èj
-    Set ws = wb.Worksheets("ƒ‚[ƒ‹FR•Ê")
-    
-    ' ƒe[ƒuƒ‹æ“¾
-    Set srcTable = ws.ListObjects("_ƒ‚[ƒ‹FR•Êa")
-    Set tgtTable = ws.ListObjects("_ƒ‚[ƒ‹FR•Êb")
-    
-    ' ƒf[ƒ^”ÍˆÍƒ`ƒFƒbƒN
-    If srcTable.DataBodyRange Is Nothing Then
-        Application.StatusBar = "ƒ\[ƒXƒe[ƒuƒ‹‚Éƒf[ƒ^‚ª‚ ‚è‚Ü‚¹‚ñ"
-        GoTo Cleanup
+    ' ã‚½ãƒ¼ã‚¹ãƒ†ãƒ¼ãƒ–ãƒ«å–å¾—
+    On Error Resume Next
+    Set sourceTable = wsSource.ListObjects("_ãƒ¢ãƒ¼ãƒ«FRåˆ¥a")
+    If sourceTable Is Nothing Then
+        MsgBox "ã€Œ_ãƒ¢ãƒ¼ãƒ«FRåˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚", vbCritical, "ãƒ†ãƒ¼ãƒ–ãƒ«ã‚¨ãƒ©ãƒ¼"
+        GoTo CleanupAndExit
     End If
+    On Error GoTo ErrorHandler
     
-    If tgtTable.DataBodyRange Is Nothing Then
-        Application.StatusBar = "“]‹Læƒe[ƒuƒ‹‚Éƒf[ƒ^‚ª‚ ‚è‚Ü‚¹‚ñ"
-        GoTo Cleanup
+    ' ãƒ‡ãƒ¼ã‚¿ç¯„å›²å–å¾—
+    If sourceTable.DataBodyRange Is Nothing Then
+        MsgBox "ã€Œ_ãƒ¢ãƒ¼ãƒ«FRåˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ã«ãƒ‡ãƒ¼ã‚¿ãŒã‚ã‚Šã¾ã›ã‚“ã€‚", vbInformation, "ãƒ‡ãƒ¼ã‚¿ãªã—"
+        GoTo CleanupAndExit
     End If
+    Set sourceData = sourceTable.DataBodyRange
     
-    ' ƒ\[ƒXƒe[ƒuƒ‹‚Ì—ñƒCƒ“ƒfƒbƒNƒXæ“¾
-    Set srcCols = CreateObject("Scripting.Dictionary")
-    srcCols("“ú•t") = srcTable.ListColumns("“ú•t").Index
-    srcCols("F/R") = srcTable.ListColumns("F/R").Index
-    srcCols("ÀÑ") = srcTable.ListColumns("ÀÑ").Index
-    srcCols("•s—Ç") = srcTable.ListColumns("•s—Ç").Index
-    srcCols("‰Ò“­ŠÔ") = srcTable.ListColumns("‰Ò“­ŠÔ").Index
+    ' ==========================================
+    ' æ—¥ä»˜ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ä½œæˆï¼ˆé«˜é€Ÿæ¤œç´¢ç”¨ï¼‰
+    ' ==========================================
+    Set dateDict = CreateObject("Scripting.Dictionary")
     
-    ' “]‹Læ‚Ì—ñƒCƒ“ƒfƒbƒNƒXæ“¾
-    Set tgtCols = CreateObject("Scripting.Dictionary")
-    tgtCols("“ú•t") = tgtTable.ListColumns("“ú•t").Index
-    
-    ' ƒ‚[ƒ‹F—ñ
-    tgtCols("ƒ‚[ƒ‹F“úÀÑ") = GetColumnIndexSafe(tgtTable, "ƒ‚[ƒ‹F“úÀÑ")
-    tgtCols("ƒ‚[ƒ‹F“ú•s—Ç”") = GetColumnIndexSafe(tgtTable, "ƒ‚[ƒ‹F“ú•s—Ç”")
-    tgtCols("ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ") = GetColumnIndexSafe(tgtTable, "ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ")
-    
-    ' ƒ‚[ƒ‹R—ñ
-    tgtCols("ƒ‚[ƒ‹R“úÀÑ") = GetColumnIndexSafe(tgtTable, "ƒ‚[ƒ‹R“úÀÑ")
-    tgtCols("ƒ‚[ƒ‹R“ú•s—Ç”") = GetColumnIndexSafe(tgtTable, "ƒ‚[ƒ‹R“ú•s—Ç”")
-    tgtCols("ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ") = GetColumnIndexSafe(tgtTable, "ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ")
-    
-    ' ƒf[ƒ^”ÍˆÍæ“¾
-    Set srcData = srcTable.DataBodyRange
-    Set tgtData = tgtTable.DataBodyRange
-    
-    Dim i As Long, j As Long
-    Dim srcDate As Date, frType As String
-    Dim transferred As Long: transferred = 0
-    Dim totalRows As Long: totalRows = srcData.Rows.Count
-    
-    ' “]‹Læƒe[ƒuƒ‹‚ğˆêŠ‡ƒNƒŠƒAi‚‘¬‰»j
-    Application.StatusBar = "“]‹Læ‚ğƒNƒŠƒA’†..."
-    
-    ' ƒ‚[ƒ‹F—ñ‚ÌˆêŠ‡ƒNƒŠƒA
-    If tgtCols("ƒ‚[ƒ‹F“úÀÑ") > 0 Then
-        tgtData.Columns(tgtCols("ƒ‚[ƒ‹F“úÀÑ")).ClearContents
+    ' æ—¥ä»˜åˆ—ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹å–å¾—
+    Dim dateColIndex As Long
+    On Error Resume Next
+    dateColIndex = sourceTable.ListColumns("æ—¥ä»˜").Index
+    If Err.Number <> 0 Then
+        MsgBox "ã€Œ_ãƒ¢ãƒ¼ãƒ«FRåˆ¥aã€ãƒ†ãƒ¼ãƒ–ãƒ«ã«ã€Œæ—¥ä»˜ã€åˆ—ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚", vbCritical, "åˆ—ã‚¨ãƒ©ãƒ¼"
+        GoTo CleanupAndExit
     End If
-    If tgtCols("ƒ‚[ƒ‹F“ú•s—Ç”") > 0 Then
-        tgtData.Columns(tgtCols("ƒ‚[ƒ‹F“ú•s—Ç”")).ClearContents
-    End If
-    If tgtCols("ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ") > 0 Then
-        tgtData.Columns(tgtCols("ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ")).ClearContents
-    End If
+    On Error GoTo ErrorHandler
     
-    ' ƒ‚[ƒ‹R—ñ‚ÌˆêŠ‡ƒNƒŠƒA
-    If tgtCols("ƒ‚[ƒ‹R“úÀÑ") > 0 Then
-        tgtData.Columns(tgtCols("ƒ‚[ƒ‹R“úÀÑ")).ClearContents
-    End If
-    If tgtCols("ƒ‚[ƒ‹R“ú•s—Ç”") > 0 Then
-        tgtData.Columns(tgtCols("ƒ‚[ƒ‹R“ú•s—Ç”")).ClearContents
-    End If
-    If tgtCols("ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ") > 0 Then
-        tgtData.Columns(tgtCols("ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ")).ClearContents
-    End If
-    
-    ' ‚‘¬‰»‚ÌŠÌF“]‹Læ‚Ì“ú•t‚Æs”Ô†‚Ì‘Î‰‚ğDictionary‚ÉŠi”[
-    Application.StatusBar = "ƒCƒ“ƒfƒbƒNƒXì¬’†..."
-    Dim dateIndex As Object
-    Set dateIndex = CreateObject("Scripting.Dictionary")
-    
-    For j = 1 To tgtData.Rows.Count
-        Dim tgtDate As Date
-        tgtDate = tgtData.Cells(j, tgtCols("“ú•t")).Value
-        ' “ú•t‚ğƒL[‚É‚µ‚Äs”Ô†‚ğŠi”[
-        dateIndex(CLng(tgtDate)) = j
-    Next j
-    
-    ' ƒf[ƒ^‚Ì“]‹Li’´‚‘¬”Åj
-    Application.StatusBar = "ƒf[ƒ^“]‹L’†..."
-    For i = 1 To totalRows
-        ' i’»•\¦i100s‚²‚Æ‚ÉXV - DoEvents‚ğŒ¸‚ç‚·j
-        If i Mod 100 = 0 Or i = totalRows Then
-            Application.StatusBar = "ƒ‚[ƒ‹FR•Ê“]‹Lˆ—’†... " & Format(i / totalRows, "0%") & _
-                                  " (" & i & "/" & totalRows & "s)"
-            ' DoEvents‚ÍÅ¬ŒÀ‚É
-            If i Mod 500 = 0 Then DoEvents
-        End If
-        
-        ' ƒ\[ƒXƒf[ƒ^æ“¾
-        srcDate = srcData.Cells(i, srcCols("“ú•t")).Value
-        frType = Trim(srcData.Cells(i, srcCols("F/R")).Value)
-        
-        ' “ú•t‚É‘Î‰‚·‚é“]‹Læ‚Ìs”Ô†‚ğæ“¾i‚‘¬ŒŸõj
-        If dateIndex.Exists(CLng(srcDate)) Then
-            j = dateIndex(CLng(srcDate))
-            
-            ' F/Rƒ^ƒCƒv‚É‰‚¶‚Ä“]‹L
-            If frType = "F" Then
-                ' ƒ‚[ƒ‹F—ñ‚Ö‚Ì“]‹L
-                If tgtCols("ƒ‚[ƒ‹F“úÀÑ") > 0 Then
-                    tgtData.Cells(j, tgtCols("ƒ‚[ƒ‹F“úÀÑ")).Value = srcData.Cells(i, srcCols("ÀÑ")).Value
-                End If
-                If tgtCols("ƒ‚[ƒ‹F“ú•s—Ç”") > 0 Then
-                    tgtData.Cells(j, tgtCols("ƒ‚[ƒ‹F“ú•s—Ç”")).Value = srcData.Cells(i, srcCols("•s—Ç")).Value
-                End If
-                If tgtCols("ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ") > 0 Then
-                    tgtData.Cells(j, tgtCols("ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ")).Value = srcData.Cells(i, srcCols("‰Ò“­ŠÔ")).Value
-                End If
-                transferred = transferred + 1
-                
-            ElseIf frType = "R" Then
-                ' ƒ‚[ƒ‹R—ñ‚Ö‚Ì“]‹L
-                If tgtCols("ƒ‚[ƒ‹R“úÀÑ") > 0 Then
-                    tgtData.Cells(j, tgtCols("ƒ‚[ƒ‹R“úÀÑ")).Value = srcData.Cells(i, srcCols("ÀÑ")).Value
-                End If
-                If tgtCols("ƒ‚[ƒ‹R“ú•s—Ç”") > 0 Then
-                    tgtData.Cells(j, tgtCols("ƒ‚[ƒ‹R“ú•s—Ç”")).Value = srcData.Cells(i, srcCols("•s—Ç")).Value
-                End If
-                If tgtCols("ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ") > 0 Then
-                    tgtData.Cells(j, tgtCols("ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ")).Value = srcData.Cells(i, srcCols("‰Ò“­ŠÔ")).Value
-                End If
-                transferred = transferred + 1
-            End If
+    ' æ—¥ä»˜ã¨ãã®è¡Œç•ªå·ã‚’Dictionaryã«æ ¼ç´
+    For i = 1 To sourceData.Rows.Count
+        targetDate = sourceData.Cells(i, dateColIndex).Value
+        If Not IsEmpty(targetDate) Then
+            dateDict(targetDate) = i
         End If
     Next i
     
-    ' ¬”“_ˆÈ‰º2Œ…‚Ì‘®İ’èi—ñ‘S‘Ì‚ÉˆêŠ‡“K—pj
-    Application.StatusBar = "‘®İ’è’†..."
+    ' ==========================================
+    ' ãƒ¡ã‚¤ãƒ³å‡¦ç†: å„F/Rã‚¿ã‚¤ãƒ—ã®ãƒ‡ãƒ¼ã‚¿ã‚’è»¢è¨˜
+    ' ==========================================
+    totalRows = dateDict.Count * UBound(frTypes) + 1
+    processedCount = 0
     
-    ' ƒ‚[ƒ‹F“ú‰Ò“­ŠÔi—ñ‘S‘Ìj
-    If tgtCols("ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ") > 0 Then
-        tgtTable.ListColumns("ƒ‚[ƒ‹F“ú‰Ò“­ŠÔ").DataBodyRange.NumberFormatLocal = "0.00"
-    End If
+    ' å„F/Rã‚¿ã‚¤ãƒ—ã«ã¤ã„ã¦å‡¦ç†
+    Dim k As Long
+    For k = 0 To UBound(frTypes)
+        ' è»¢è¨˜å…ˆã‚·ãƒ¼ãƒˆã®å­˜åœ¨ç¢ºèª
+        On Error Resume Next
+        Set targetSheet = ThisWorkbook.Worksheets(sheetNames(k))
+        On Error GoTo ErrorHandler
+        
+        If targetSheet Is Nothing Then
+            Debug.Print "è­¦å‘Š: ã‚·ãƒ¼ãƒˆã€Œ" & sheetNames(k) & "ã€ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚"
+            GoTo NextType
+        End If
+        
+        Application.StatusBar = "è»¢è¨˜å‡¦ç†ä¸­... (" & sheetNames(k) & ")"
+        
+        ' å„æ—¥ä»˜ã®ãƒ‡ãƒ¼ã‚¿ã‚’å‡¦ç†
+        Dim dateKey As Variant
+        For Each dateKey In dateDict.Keys
+            processedCount = processedCount + 1
+            i = dateDict(dateKey)
+            
+            ' è»¢è¨˜å…ˆã‚·ãƒ¼ãƒˆã§è©²å½“æ—¥ä»˜ã®è¡Œã‚’æ¤œç´¢
+            lastRow = targetSheet.Cells(targetSheet.Rows.Count, 1).End(xlUp).Row
+            foundRow = 0
+            
+            For j = 2 To lastRow
+                If targetSheet.Cells(j, 1).Value = dateKey Then
+                    foundRow = j
+                    Exit For
+                End If
+            Next j
+            
+            ' è©²å½“æ—¥ä»˜ãŒè¦‹ã¤ã‹ã‚‰ãªã„å ´åˆã¯æ–°è¦è¡Œè¿½åŠ 
+            If foundRow = 0 Then
+                foundRow = lastRow + 1
+                targetSheet.Cells(foundRow, 1).Value = dateKey
+            End If
+            
+            ' ãƒ‡ãƒ¼ã‚¿è»¢è¨˜
+            ' æ—¥å®Ÿç¸¾
+            Dim colName As String
+            Dim colIndex As Long
+            colName = frTypes(k) & "æ—¥å®Ÿç¸¾"
+            On Error Resume Next
+            colIndex = sourceTable.ListColumns(colName).Index
+            If Err.Number = 0 Then
+                If Not IsEmpty(sourceData.Cells(i, colIndex).Value) Then
+                    targetSheet.Cells(foundRow, 2).Value = sourceData.Cells(i, colIndex).Value
+                End If
+            End If
+            Err.Clear
+            
+            ' æ—¥ä¸è‰¯æ•°
+            colName = frTypes(k) & "æ—¥ä¸è‰¯æ•°"
+            colIndex = sourceTable.ListColumns(colName).Index
+            If Err.Number = 0 Then
+                If Not IsEmpty(sourceData.Cells(i, colIndex).Value) Then
+                    targetSheet.Cells(foundRow, 3).Value = sourceData.Cells(i, colIndex).Value
+                End If
+            End If
+            Err.Clear
+            
+            ' æ—¥å‡ºæ¥é«˜ã‚µã‚¤ã‚¯ãƒ«
+            colName = frTypes(k) & "æ—¥å‡ºæ¥é«˜ï½»ï½²ï½¸ï¾™"
+            colIndex = sourceTable.ListColumns(colName).Index
+            If Err.Number = 0 Then
+                If Not IsEmpty(sourceData.Cells(i, colIndex).Value) Then
+                    targetSheet.Cells(foundRow, 4).Value = sourceData.Cells(i, colIndex).Value
+                End If
+            End If
+            Err.Clear
+            On Error GoTo ErrorHandler
+            
+            ' é€²æ—æ›´æ–°
+            If processedCount Mod 10 = 0 Then
+                Application.StatusBar = "è»¢è¨˜å‡¦ç†ä¸­... (" & processedCount & "/" & totalRows & ")"
+            End If
+        Next dateKey
+        
+NextType:
+        Set targetSheet = Nothing
+    Next k
     
-    ' ƒ‚[ƒ‹R“ú‰Ò“­ŠÔi—ñ‘S‘Ìj
-    If tgtCols("ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ") > 0 Then
-        tgtTable.ListColumns("ƒ‚[ƒ‹R“ú‰Ò“­ŠÔ").DataBodyRange.NumberFormatLocal = "0.00"
-    End If
-    
-    ' Š®—¹ˆ—
-    Application.StatusBar = "ƒ‚[ƒ‹FR•Ê“]‹LŠ®—¹: " & transferred & "Œ‚Ìƒf[ƒ^‚ğ“]‹L"
-    Application.Wait Now + TimeValue("0:00:01")
-    Application.StatusBar = False
-    
-    GoTo Cleanup
+    ' æ­£å¸¸çµ‚äº†
+    GoTo CleanupAndExit
     
 ErrorHandler:
-    ' ƒGƒ‰[‚Ìˆ—
-    MsgBox "ƒ‚[ƒ‹FR•Ê“]‹Lˆ—‚ÅƒGƒ‰[‚ª”­¶‚µ‚Ü‚µ‚½" & vbCrLf & vbCrLf & _
-           "ƒGƒ‰[“à—e: " & Err.Description & vbCrLf & _
-           "ƒGƒ‰[”Ô†: " & Err.Number, vbCritical, "“]‹LƒGƒ‰["
+    ' ã‚¨ãƒ©ãƒ¼å‡¦ç†
+    MsgBox "è»¢è¨˜å‡¦ç†ä¸­ã«ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ã¾ã—ãŸã€‚" & vbCrLf & _
+           "ã‚¨ãƒ©ãƒ¼å†…å®¹: " & Err.Description & vbCrLf & _
+           "ã‚¨ãƒ©ãƒ¼ç•ªå·: " & Err.Number, vbCritical, "è»¢è¨˜ã‚¨ãƒ©ãƒ¼"
     
-Cleanup:
-    ' Œãˆ—i‚‘¬‰»İ’è‚ğŒ³‚É–ß‚·j
-    Application.ScreenUpdating = True
-    Application.Calculation = xlCalculationAutomatic
+CleanupAndExit:
+    ' å¾Œå‡¦ç†
+    Set dateDict = Nothing
     Application.EnableEvents = True
+    Application.Calculation = xlCalculationAutomatic
+    Application.ScreenUpdating = True
     Application.StatusBar = False
-    
-    Set srcCols = Nothing
-    Set tgtCols = Nothing
-    Set srcData = Nothing
-    Set tgtData = Nothing
-    Set srcTable = Nothing
-    Set tgtTable = Nothing
-    Set ws = Nothing
-    Set wb = Nothing
-    Set dateIndex = Nothing
 End Sub
-
-' —ñƒCƒ“ƒfƒbƒNƒX‚ğˆÀ‘S‚Éæ“¾‚·‚éƒwƒ‹ƒp[ŠÖ”
-Private Function GetColumnIndexSafe(tbl As ListObject, colName As String) As Long
-    On Error Resume Next
-    GetColumnIndexSafe = tbl.ListColumns(colName).Index
-    If Err.Number <> 0 Then
-        GetColumnIndexSafe = 0
-        Debug.Print "Œx: —ñu" & colName & "v‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ"
-    End If
-    On Error GoTo 0
-End Function
