@@ -1,16 +1,16 @@
-# ExcelAuto プロジェクト設定
+# excel-auto プロジェクト設定
 
 ## 必読ファイル（IMPORTANT: 作業開始前に必ず読むこと）
 
 **YOU MUST** 以下のファイルを作業開始時に読み込んでから作業を開始すること：
 
-1. `/home/shostako/ClaudeCode/ExcelAuto/docs/excel-knowledge/failures/001_activate_vs_screenupdating.md`
+1. `/home/shostako/ClaudeCode/excel-auto/docs/excel-knowledge/failures/001_activate_vs_screenupdating.md`
    - 画面ちらつき問題の根本原因（Activateメソッド）
    
-2. `/home/shostako/ClaudeCode/ExcelAuto/docs/excel-knowledge/patterns/VBA_OPTIMIZATION_PATTERNS.md`
+2. `/home/shostako/ClaudeCode/excel-auto/docs/excel-knowledge/patterns/VBA_OPTIMIZATION_PATTERNS.md`
    - VBA最適化の基本パターン
    
-3. `/home/shostako/ClaudeCode/ExcelAuto/docs/excel-knowledge/techniques/VBA_BASIC_TECHNIQUES.md`
+3. `/home/shostako/ClaudeCode/excel-auto/docs/excel-knowledge/techniques/VBA_BASIC_TECHNIQUES.md`
    - 基本テクニック集
 
 これらの内容を踏まえずにコードを書くと、同じ失敗を繰り返すことになる。
