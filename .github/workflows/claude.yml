@@ -40,7 +40,7 @@ jobs:
             - create_file
             - list_files
             - search_files
-          custom_instructions: |
+          prompt: |
             プロジェクトのCLAUDE.mdファイルを必ず最初に読んでください。
             Excel操作の自動化コードを生成する際は、安全性と品質を最優先してください。
             生成したコードには必ず日本語のコメントを含めてください。
