@@ -29,18 +29,13 @@ jobs:
       - name: Run Claude Code Action
         uses: grll/claude-code-action@beta
         with:
-          use_oauth: true
+          use_oauth: "true"
           claude_access_token: ${{ secrets.CLAUDE_ACCESS_TOKEN }}
           claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ github.token }}
-          allowed_tools: |
-            - read_file
-            - write_file
-            - create_file
-            - list_files
-            - search_files
-          prompt: |
+          allowed_tools: read_file,write_file,create_file,list_files,search_files
+          direct_prompt: |
             プロジェクトのCLAUDE.mdファイルを必ず最初に読んでください。
             Excel操作の自動化コードを生成する際は、安全性と品質を最優先してください。
             生成したコードには必ず日本語のコメントを含めてください。
