@@ -35,7 +35,7 @@ jobs:
           claude_expires_at: ${{ secrets.CLAUDE_EXPIRES_AT }}
           github_token: ${{ github.token }}
           allowed_tools: read_file,write_file,create_file,list_files,search_files
-          direct_prompt: |
+          custom_instructions: |
             プロジェクトのCLAUDE.mdファイルを必ず最初に読んでください。
             Excel操作の自動化コードを生成する際は、安全性と品質を最優先してください。
             生成したコードには必ず日本語のコメントを含めてください。
