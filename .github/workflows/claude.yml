@@ -42,8 +42,13 @@ jobs:
             - search_files
             - mcp__github__create_pull_request
             - Bash(git:*)
+            - Bash(gh:pr:create)
+            - Bash(gh:pr:*)
           custom_instructions: |
             プロジェクトのCLAUDE.mdファイルを必ず最初に読んでください。
             Excel操作の自動化コードを生成する際は、安全性と品質を最優先してください。
             生成したコードには必ず日本語のコメントを含めてください。
-            作業完了後は必ずプルリクエストを作成してください。
+            作業完了後は必ず以下の手順でプルリクエストを作成してください：
+            1. ファイル作成・修正をコミット
+            2. gh pr createコマンドを実行してPRを作成
+            3. 適切なタイトルと説明を設定
