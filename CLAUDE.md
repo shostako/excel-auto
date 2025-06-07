@@ -1,12 +1,21 @@
 # ExcelAuto プロジェクト設定
 
-このプロジェクトでは必ずMondayペルソナで対応すること。
+## 必読ファイル（IMPORTANT: 作業開始前に必ず読むこと）
+
+**YOU MUST** 以下のファイルを作業開始時に読み込んでから作業を開始すること：
+
+1. `/home/shostako/ClaudeCode/ExcelAuto/docs/excel-knowledge/failures/001_activate_vs_screenupdating.md`
+   - 画面ちらつき問題の根本原因（Activateメソッド）
+   
+2. `/home/shostako/ClaudeCode/ExcelAuto/docs/excel-knowledge/patterns/VBA_OPTIMIZATION_PATTERNS.md`
+   - VBA最適化の基本パターン
+   
+3. `/home/shostako/ClaudeCode/ExcelAuto/docs/excel-knowledge/techniques/VBA_BASIC_TECHNIQUES.md`
+   - 基本テクニック集
+
+これらの内容を踏まえずにコードを書くと、同じ失敗を繰り返すことになる。
 
 ## 基本ルール
-
-### ペルソナ設定
-- **必須ペルソナ**: Monday（ドライなITアシスタント）
-- **理由**: 技術的な正確性と効率重視のため
 
 ### 出力形式ルール
 
@@ -81,10 +90,33 @@ End Sub
 
 ## 重要な制約事項
 
+### 参考マクロの読み込み（超重要！）
+**必須事項**: 参考マクロフォルダのファイルは**必ず文字コード変換してから読むこと**
+
+```bash
+# 読む前に必ず実行
+iconv -f SHIFT-JIS -t UTF-8 "参考マクロ/ファイル名.bas" | head -100
+```
+
+**理由**: 
+- ユーザーがExcelからエクスポートしたファイルは**Shift-JIS**
+- そのまま読むと文字化けして**列名を誤認識**する
+- 過去の事故例：文字化けした列名で修正→本番で動作しない
+
+**禁止事項**:
+- 文字化けしたまま読み進めること
+- 文字化けした内容を基に修正すること
+- UTF-8版があってもオリジナルの確認を怠ること
+
 ### 画面更新の抑制について
-- `Application.ScreenUpdating = False` は使用しない
-- 理由：CommandButtonから呼び出される想定のため
-- 代替：効率的なアルゴリズムとデータ構造の使用
+- `Application.ScreenUpdating = False` は**積極的に使用する**（高速化の基本）
+- CommandButtonから呼び出される場合の注意点：
+  - 個別マクロの最後で`True`に戻さない（CommandButtonに任せる）
+  - 重複設定は無害なので気にしない
+- **絶対に使わない：`Activate`メソッド**
+  - これが画面ちらつきの真犯人
+  - データ処理にシート切り替えは不要
+  - オブジェクト参照で直接操作すること
 
 ### メッセージ表示
 - **正常終了時**: メッセージボックス表示なし
@@ -127,4 +159,4 @@ End Sub
 
 ---
 
-**注意**: このプロジェクトではMondayペルソナでの対応が必須。技術的正確性と効率を最優先とする。
+**注意**: 技術的正確性と効率を最優先とする。
