@@ -1,0 +1,128 @@
+let
+    ソース = Excel.Workbook(File.Contents("Z:\全社共有\生産管理課\生産実績データ\2506.xlsx"), null, true),
+    Sheet1_Sheet = ソース{[Item="Sheet1",Kind="Sheet"]}[Data],
+    昇格されたヘッダー数 = Table.PromoteHeaders(Sheet1_Sheet, [PromoteAllScalars=true]),
+    変更された型 = Table.TransformColumnTypes(昇格されたヘッダー数,{{"作業日", type date}, {"担当者コード", Int64.Type}, {"担当者略称", type text}, {"製番", type text}, {"枝番", Int64.Type}, {"指示書№", Int64.Type}, {"希望納期", type date}, {"品番・図番", type text}, {"製作数量", Int64.Type}, {"工順", Int64.Type}, {"工程コード", type text}, {"工程略称", type text}, {"機械コード", type text}, {"機械略称", type text}, {"実績数量", Int64.Type}, {"不良数量", Int64.Type}, {"作業区分", type text}, {"不良区分コード", Int64.Type}, {"不良区分略称", type text}, {"加工時間", Int64.Type}, {"時刻", type any}, {"POP読取日時", type datetime}}),
+    削除された空白行 = Table.SelectRows(変更された型, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
+
+    日付列追加 = Table.AddColumn(削除された空白行, "日付", each
+        let
+            dateTimeValue = try DateTime.From([時刻]) otherwise null,
+            作業日の日付 = [作業日],
+            時刻部分 = if dateTimeValue <> null then DateTime.Time(dateTimeValue) else null
+        in
+        // 時刻部分が取得でき、かつ0時より大きく8時以下の場合
+        if 時刻部分 <> null and 時刻部分 > #time(0, 0, 0) and 時刻部分 <= #time(8, 0, 0) then
+            Date.AddDays(作業日の日付, -1)
+        else
+            作業日の日付,
+    type date),
+
+    削除された他の列 = Table.SelectColumns(日付列追加,{"日付", "品番・図番", "機械コード", "実績数量", "不良数量", "作業区分", "不良区分略称", "加工時間", "時刻"}),
+    フィルターされた行 = Table.SelectRows(削除された他の列, each ([作業区分] = "加工完了" or [作業区分] = "段取完了") and ([機械コード] <> "" and [機械コード] <> "TRRL")),
+    
+    // ===== 重複削除処理 =====
+    重複削除済み行 = let
+        SS行 = Table.SelectRows(フィルターされた行, each ([機械コード] = "SS01" or [機械コード] = "SS02" or [機械コード] = "SS03" or [機械コード] = "SS04" or [機械コード] = "SS05")),
+        非SS行 = Table.SelectRows(フィルターされた行, each ([機械コード] <> "SS01" and [機械コード] <> "SS02" and [機械コード] <> "SS03" and [機械コード] <> "SS04" and [機械コード] <> "SS05")),
+        
+        重複削除済みSS行 = Table.FromRecords(
+            List.Combine(
+                List.Transform(
+                    Table.Group(SS行, {"実績数量", "時刻"}, {{"Rows", each _, type table}})[Rows],
+                    each Table.ToRecords(Table.FirstN(Table.Sort(_, {{"品番・図番", Order.Ascending}}), 1))
+                )
+            )
+        ),
+        
+        結合結果 = Table.Combine({非SS行, 重複削除済みSS行})
+    in
+        結合結果,
+    
+    // ===== 統合されたグループ化処理（1回目と2回目を統合） =====
+    統合グループ化 = Table.Group(重複削除済み行, {"日付", "品番・図番", "機械コード"}, {
+        {"実績数量", each List.Sum([実績数量]), type nullable number},
+        {"不良数量", each List.Sum([不良数量]), type nullable number},
+        // 段取時間：作業区分が「段取完了」の加工時間の合計を分で計算、nullの場合は0
+        {"段取時間", each 
+            let
+                段取時間計算値 = List.Sum(List.Transform(Table.SelectRows(_, each [作業区分] = "段取完了")[加工時間], each _ / 60))
+            in
+                if 段取時間計算値 = null then 0 else 段取時間計算値, 
+            type nullable number},
+        // 稼働時間：作業区分が「加工完了」の加工時間の合計を分で計算
+        {"稼働時間", each List.Sum(List.Transform(Table.SelectRows(_, each [作業区分] = "加工完了")[加工時間], each _ / 60)), type nullable number},
+        // 不良区分の統合
+        {
+            "不良区分",
+            each
+                let
+                    ValidRowsTable = Table.SelectRows(_,
+                        (row) => row[不良区分略称] <> null and row[不良区分略称] <> ""
+                    ),
+                    CombinedTextList = List.Transform(
+                        Table.ToRecords(ValidRowsTable),
+                        (record) => record[不良区分略称] & Text.From(record[不良数量])
+                    )
+                in
+                    Text.Combine(CombinedTextList, ","),
+            type nullable text
+        }
+    }),
+
+    // ===== 実績数量0の行を他の行にマージする処理 =====
+    処理済みグループ = Table.Group(統合グループ化, {"品番・図番", "機械コード"}, {
+        {"ProcessedData", (currentGroupTable as table) =>
+            let
+                zero実績行 = Table.SelectRows(currentGroupTable, each [実績数量] = 0),
+                nonZero実績行 = Table.SelectRows(currentGroupTable, each [実績数量] <> 0),
+                resultTable = if Table.IsEmpty(zero実績行) or Table.IsEmpty(nonZero実績行) then
+                                nonZero実績行
+                            else
+                                let
+                                    zero不良数量合計 = List.Sum(List.RemoveNulls(zero実績行[不良数量])),
+                                    zero不良区分リストRaw = List.Combine(
+                                        List.Transform(zero実績行[不良区分], (txt) =>
+                                            if txt = null or txt = "" then {} else Text.Split(txt, ",")
+                                        )
+                                    ),
+                                    zero不良区分リスト = List.Distinct(List.Select(zero不良区分リストRaw, each _ <> null and _ <> "")),
+                                    indexedNonZero実績行 = Table.AddIndexColumn(nonZero実績行, "__SortIndex", 0, 1, Int64.Type),
+                                    targetRowRecord = Table.First(Table.Sort(indexedNonZero実績行, {{"実績数量", Order.Descending}, {"__SortIndex", Order.Ascending}})),
+                                    targetRowIndex = Record.Field(targetRowRecord, "__SortIndex"),
+                                    transformedNonZero実績行 = Table.FromRecords(
+                                        List.Transform(Table.ToRecords(indexedNonZero実績行), (row) =>
+                                            if Record.Field(row, "__SortIndex") = targetRowIndex then
+                                                Record.TransformFields(row, {
+                                                    {"不良数量", each (_ ?? 0) + (zero不良数量合計 ?? 0)},
+                                                    {"不良区分", (currentVal) =>
+                                                        let
+                                                            currentListRaw = if currentVal = null or currentVal = "" then {} else Text.Split(currentVal, ","),
+                                                            currentList = List.Distinct(List.Select(currentListRaw, each _ <> null and _ <> "")),
+                                                            combinedList = List.Distinct(List.Combine({currentList, zero不良区分リスト}))
+                                                        in Text.Combine(combinedList, ",")
+                                                    }
+                                                })
+                                            else
+                                                row
+                                        )
+                                    ),
+                                    result = Table.RemoveColumns(transformedNonZero実績行, {"__SortIndex"})
+                                in
+                                    result
+            in
+                resultTable, type table}
+    }),
+
+    // ===== テーブル展開と最終処理 =====
+    groupingKeysOf処理済みグループ = {"品番・図番", "機械コード"},
+    columnsInProcessedData = Table.ColumnNames(統合グループ化),
+    columnsToExpand = List.RemoveItems(columnsInProcessedData, groupingKeysOf処理済みグループ),
+
+    最終結果テーブル展開前 = Table.ExpandTableColumn(処理済みグループ, "ProcessedData", columnsToExpand),
+    フィルターされた行1 = Table.SelectRows(最終結果テーブル展開前, each ([日付] <> null)),
+    並べ替えられた列 = Table.ReorderColumns(フィルターされた行1,{"日付", "品番・図番", "機械コード", "実績数量", "不良数量", "稼働時間", "段取時間", "不良区分"}),
+    列名変更 = Table.RenameColumns(並べ替えられた列,{{"品番・図番", "品番"}, {"機械コード", "機械"}, {"実績数量", "実績"}, {"不良数量", "不良"}})
+
+in
+    列名変更
