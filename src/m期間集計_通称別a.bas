@@ -1,8 +1,6 @@
-Attribute VB_Name = "m期間集計_通称別a_最適化版"
-Sub 期間集計_通称別a_最適化版()
-    ' 「品番別」シートの「_品番別」テーブルから直接通称別集計を行い、
-    ' 「品番別aa」シートの「_品番別aa」テーブルに出力するマクロ
-    ' 品番を通称に変換してグループ化し、各項目を集計する
+Attribute VB_Name = "m期間集計_通称別a"
+Sub 期間集計_通称別a()
+    ' 最終修正版：列名を実際のテーブルに合わせて修正
     
     ' ★最適化：画面更新の停止（画面ちらつき防止の最重要設定）
     Application.ScreenUpdating = False
@@ -130,67 +128,39 @@ Sub 期間集計_通称別a_最適化版()
     ' ★最適化：元データを配列として一括取得
     srcData = srcTable.DataBodyRange.Value
     
-    ' 列のインデックスを取得
+    ' 列のインデックスを取得（★実際のテーブル列名に合わせて修正）
     Set headerRow = srcTable.HeaderRowRange
     
     For i = 1 To headerRow.Cells.Count
-        Select Case headerRow.Cells(1, i).Value
-            Case "品番"
-                hinbanCol = i
-            Case "日付"
-                dateCol = i
-            Case "型替"
-                kataKaeCol = i
-            Case "稼動"
-                kadoCol = i
-            Case "サイクル"
-                cycleCol = i
-            Case "ショット数"
-                shotCol = i
-            Case "不良数"
-                furyoCol = i
-            Case "打出調"
-                uchidashiCol = i
-            Case "ショート"
-                shortCol = i
-            Case "ウエルド"
-                weldCol = i
-            Case "シワ"
-                shiwaCol = i
-            Case "異物"
-                ibutsuCol = i
-            Case "シルバー"
-                silverCol = i
-            Case "フローマーク"
-                flowCol = i
-            Case "ゴミ付着"
-                gomiCol = i
-            Case "GCカス"
-                gcKasuCol = i
-            Case "キズ"
-                kizuCol = i
-            Case "ヒケ"
-                hikeCol = i
-            Case "糸引き"
-                itohikiCol = i
-            Case "型汚れ"
-                kataYogoreCol = i
-            Case "マクレ"
-                makureCol = i
-            Case "取出不良"
-                toridashiFuryoCol = i
-            Case "割れ剥化"
-                wareHakukaCol = i
-            Case "コアカス"
-                coreKasuCol = i
-            Case "その他"
-                sonotaCol = i
-            Case "チョコ停打出調"
-                chocoCol = i
-            Case "検査"
-                kensaCol = i
-            Case "流出不良"
-                ryushutuCol = i
+        Select Case Trim(CStr(headerRow.Cells(1, i).Value))
+            Case "品番": hinbanCol = i
+            Case "日付": dateCol = i
+            Case "型替": kataKaeCol = i
+            Case "稼働": kadoCol = i        ' ★修正：「稼動」→「稼働」
+            Case "サイクル": cycleCol = i
+            Case "ショット数": shotCol = i
+            Case "不良数": furyoCol = i
+            Case "打出し": uchidashiCol = i  ' ★修正：「打出調」→「打出し」
+            Case "ショート": shortCol = i
+            Case "ウエルド": weldCol = i
+            Case "シワ": shiwaCol = i
+            Case "異物": ibutsuCol = i
+            Case "シルバー": silverCol = i
+            Case "フローマーク": flowCol = i
+            Case "ゴミ押し": gomiCol = i     ' ★修正：「ゴミ付着」→「ゴミ押し」
+            Case "GCカス": gcKasuCol = i
+            Case "キズ": kizuCol = i
+            Case "ヒケ": hikeCol = i
+            Case "糸引き": itohikiCol = i
+            Case "型汚れ": kataYogoreCol = i
+            Case "マクレ": makureCol = i
+            Case "取出不良": toridashiFuryoCol = i
+            Case "割れ白化": wareHakukaCol = i   ' ★修正：「割れ剥化」→「割れ白化」
+            Case "コアカス": coreKasuCol = i
+            Case "その他": sonotaCol = i
+            Case "チョコ停打出し": chocoCol = i  ' ★修正：「チョコ停打出調」→「チョコ停打出し」
+            Case "検査": kensaCol = i
+            Case "流出不良": ryushutuCol = i
         End Select
     Next i
     
@@ -242,19 +212,19 @@ Sub 期間集計_通称別a_最適化版()
                 
                 ' 各集計項目を初期化
                 dictSums(tsusho)("型替") = 0
-                dictSums(tsusho)("稼動") = 0
+                dictSums(tsusho)("稼働") = 0          ' ★修正：「稼動」→「稼働」
                 dictSums(tsusho)("サイクル") = 0
                 dictCounts(tsusho)("サイクル") = 0  ' サイクル平均計算用
                 dictSums(tsusho)("ショット数") = 0
                 dictSums(tsusho)("不良数") = 0
-                dictSums(tsusho)("打出調") = 0
+                dictSums(tsusho)("打出し") = 0        ' ★修正：「打出調」→「打出し」
                 dictSums(tsusho)("ショート") = 0
                 dictSums(tsusho)("ウエルド") = 0
                 dictSums(tsusho)("シワ") = 0
                 dictSums(tsusho)("異物") = 0
                 dictSums(tsusho)("シルバー") = 0
                 dictSums(tsusho)("フローマーク") = 0
-                dictSums(tsusho)("ゴミ付着") = 0
+                dictSums(tsusho)("ゴミ押し") = 0      ' ★修正：「ゴミ付着」→「ゴミ押し」
                 dictSums(tsusho)("GCカス") = 0
                 dictSums(tsusho)("キズ") = 0
                 dictSums(tsusho)("ヒケ") = 0
@@ -262,10 +232,10 @@ Sub 期間集計_通称別a_最適化版()
                 dictSums(tsusho)("型汚れ") = 0
                 dictSums(tsusho)("マクレ") = 0
                 dictSums(tsusho)("取出不良") = 0
-                dictSums(tsusho)("割れ剥化") = 0
+                dictSums(tsusho)("割れ白化") = 0      ' ★修正：「割れ剥化」→「割れ白化」
                 dictSums(tsusho)("コアカス") = 0
                 dictSums(tsusho)("その他") = 0
-                dictSums(tsusho)("チョコ停打出調") = 0
+                dictSums(tsusho)("チョコ停打出し") = 0 ' ★修正：「チョコ停打出調」→「チョコ停打出し」
                 dictSums(tsusho)("検査") = 0
                 dictSums(tsusho)("流出不良") = 0
             End If
@@ -276,7 +246,7 @@ Sub 期間集計_通称別a_最適化版()
             End If
             
             If kadoCol > 0 And IsNumeric(srcData(i, kadoCol)) Then
-                dictSums(tsusho)("稼動") = dictSums(tsusho)("稼動") + CDbl(srcData(i, kadoCol))
+                dictSums(tsusho)("稼働") = dictSums(tsusho)("稼働") + CDbl(srcData(i, kadoCol))  ' ★修正
             End If
             
             If cycleCol > 0 And IsNumeric(srcData(i, cycleCol)) And srcData(i, cycleCol) <> 0 Then
@@ -292,9 +262,9 @@ Sub 期間集計_通称別a_最適化版()
                 dictSums(tsusho)("不良数") = dictSums(tsusho)("不良数") + CDbl(srcData(i, furyoCol))
             End If
             
-            ' 不良項目の集計
+            ' 不良項目の集計（★列名修正反映）
             If uchidashiCol > 0 And IsNumeric(srcData(i, uchidashiCol)) Then
-                dictSums(tsusho)("打出調") = dictSums(tsusho)("打出調") + CDbl(srcData(i, uchidashiCol))
+                dictSums(tsusho)("打出し") = dictSums(tsusho)("打出し") + CDbl(srcData(i, uchidashiCol))
             End If
             
             If shortCol > 0 And IsNumeric(srcData(i, shortCol)) Then
@@ -322,7 +292,7 @@ Sub 期間集計_通称別a_最適化版()
             End If
             
             If gomiCol > 0 And IsNumeric(srcData(i, gomiCol)) Then
-                dictSums(tsusho)("ゴミ付着") = dictSums(tsusho)("ゴミ付着") + CDbl(srcData(i, gomiCol))
+                dictSums(tsusho)("ゴミ押し") = dictSums(tsusho)("ゴミ押し") + CDbl(srcData(i, gomiCol))
             End If
             
             If gcKasuCol > 0 And IsNumeric(srcData(i, gcKasuCol)) Then
@@ -354,7 +324,7 @@ Sub 期間集計_通称別a_最適化版()
             End If
             
             If wareHakukaCol > 0 And IsNumeric(srcData(i, wareHakukaCol)) Then
-                dictSums(tsusho)("割れ剥化") = dictSums(tsusho)("割れ剥化") + CDbl(srcData(i, wareHakukaCol))
+                dictSums(tsusho)("割れ白化") = dictSums(tsusho)("割れ白化") + CDbl(srcData(i, wareHakukaCol))
             End If
             
             If coreKasuCol > 0 And IsNumeric(srcData(i, coreKasuCol)) Then
@@ -366,7 +336,7 @@ Sub 期間集計_通称別a_最適化版()
             End If
             
             If chocoCol > 0 And IsNumeric(srcData(i, chocoCol)) Then
-                dictSums(tsusho)("チョコ停打出調") = dictSums(tsusho)("チョコ停打出調") + CDbl(srcData(i, chocoCol))
+                dictSums(tsusho)("チョコ停打出し") = dictSums(tsusho)("チョコ停打出し") + CDbl(srcData(i, chocoCol))
             End If
             
             If kensaCol > 0 And IsNumeric(srcData(i, kensaCol)) Then
@@ -382,63 +352,60 @@ Sub 期間集計_通称別a_最適化版()
     ' ステータスバーを更新
     Application.StatusBar = "通称別直接集計: データ出力準備中..."
     
-    ' ★最適化：出力先シートの操作をWithブロックで効率化
-    With destSheet
-        ' 出力先シートを4行目以降をクリア（1-3行目は残す）
-        .Range("A4:AB31").Clear
-        
-        ' 4行目以降の書式設定
-        With .Range("A4:AB" & .Rows.Count)
-            .Font.Name = "Yu Gothic UI"
-            .Font.Size = 11
-        End With
-        
-        ' タイトル行の作成（4行目）
-        destRow = 4
-        If useFilter Then
-            .Range("A" & destRow).Value = "期間別通称別不良集計：" & Format(StartDate, "yyyy/mm/dd") & "～" & Format(EndDate, "yyyy/mm/dd")
-        Else
-            .Range("A" & destRow).Value = "期間別通称別不良集計：全期間"
-        End If
-        .Range("A" & destRow).Font.Bold = True
-        
-        ' ヘッダー行の作成（5行目）
-        destRow = 5
-        .Range("A" & destRow).Value = "通称"
-        .Range("B" & destRow).Value = "型替"
-        .Range("C" & destRow).Value = "稼動"
-        .Range("D" & destRow).Value = "サイクル"
-        .Range("E" & destRow).Value = "ショット数"
-        .Range("F" & destRow).Value = "不良数"
-        .Range("G" & destRow).Value = "不良率"
-        .Range("H" & destRow).Value = "打出調"
-        .Range("I" & destRow).Value = "ショート"
-        .Range("J" & destRow).Value = "ウエルド"
-        .Range("K" & destRow).Value = "シワ"
-        .Range("L" & destRow).Value = "異物"
-        .Range("M" & destRow).Value = "シルバー"
-        .Range("N" & destRow).Value = "フローマーク"
-        .Range("O" & destRow).Value = "ゴミ付着"
-        .Range("P" & destRow).Value = "GCカス"
-        .Range("Q" & destRow).Value = "キズ"
-        .Range("R" & destRow).Value = "ヒケ"
-        .Range("S" & destRow).Value = "糸引き"
-        .Range("T" & destRow).Value = "型汚れ"
-        .Range("U" & destRow).Value = "マクレ"
-        .Range("V" & destRow).Value = "取出不良"
-        .Range("W" & destRow).Value = "割れ剥化"
-        .Range("X" & destRow).Value = "コアカス"
-        .Range("Y" & destRow).Value = "その他"
-        .Range("Z" & destRow).Value = "チョコ停打出調"
-        .Range("AA" & destRow).Value = "検査"
-        .Range("AB" & destRow).Value = "流出不良"
-        
-        ' ヘッダー行の書式設定
-        With .Range("A" & destRow & ":AB" & destRow)
-            .HorizontalAlignment = xlCenter  ' 中央揃え
-            .Font.Bold = True
-            .ShrinkToFit = True  ' 縮小して全体を表示
-        End With
+    ' 出力先シートを4行目以降をクリア（1-3行目は残す）
+    destSheet.Range("A4:AB31").Clear
+    
+    ' 4行目以降の書式設定
+    With destSheet.Range("A4:AB" & destSheet.Rows.Count)
+        .Font.Name = "Yu Gothic UI"
+        .Font.Size = 11
+    End With
+    
+    ' タイトル行の作成（4行目）
+    destRow = 4
+    If useFilter Then
+        destSheet.Range("A" & destRow).Value = "期間別通称別不良集計：" & Format(StartDate, "yyyy/mm/dd") & "～" & Format(EndDate, "yyyy/mm/dd")
+    Else
+        destSheet.Range("A" & destRow).Value = "期間別通称別不良集計：全期間"
+    End If
+    destSheet.Range("A" & destRow).Font.Bold = True
+    
+    ' ヘッダー行の作成（5行目）- ★出力時は元の名前のまま
+    destRow = 5
+    destSheet.Range("A" & destRow).Value = "通称"
+    destSheet.Range("B" & destRow).Value = "型替"
+    destSheet.Range("C" & destRow).Value = "稼動"           ' ★出力では「稼動」のまま
+    destSheet.Range("D" & destRow).Value = "サイクル"
+    destSheet.Range("E" & destRow).Value = "ショット数"
+    destSheet.Range("F" & destRow).Value = "不良数"
+    destSheet.Range("G" & destRow).Value = "不良率"
+    destSheet.Range("H" & destRow).Value = "打出調"        ' ★出力では「打出調」のまま
+    destSheet.Range("I" & destRow).Value = "ショート"
+    destSheet.Range("J" & destRow).Value = "ウエルド"
+    destSheet.Range("K" & destRow).Value = "シワ"
+    destSheet.Range("L" & destRow).Value = "異物"
+    destSheet.Range("M" & destRow).Value = "シルバー"
+    destSheet.Range("N" & destRow).Value = "フローマーク"
+    destSheet.Range("O" & destRow).Value = "ゴミ付着"      ' ★出力では「ゴミ付着」のまま
+    destSheet.Range("P" & destRow).Value = "GCカス"
+    destSheet.Range("Q" & destRow).Value = "キズ"
+    destSheet.Range("R" & destRow).Value = "ヒケ"
+    destSheet.Range("S" & destRow).Value = "糸引き"
+    destSheet.Range("T" & destRow).Value = "型汚れ"
+    destSheet.Range("U" & destRow).Value = "マクレ"
+    destSheet.Range("V" & destRow).Value = "取出不良"
+    destSheet.Range("W" & destRow).Value = "割れ剥化"      ' ★出力では「割れ剥化」のまま
+    destSheet.Range("X" & destRow).Value = "コアカス"
+    destSheet.Range("Y" & destRow).Value = "その他"
+    destSheet.Range("Z" & destRow).Value = "チョコ停打出調" ' ★出力では「チョコ停打出調」のまま
+    destSheet.Range("AA" & destRow).Value = "検査"
+    destSheet.Range("AB" & destRow).Value = "流出不良"
+    
+    ' ヘッダー行の書式設定
+    With destSheet.Range("A" & destRow & ":AB" & destRow)
+        .HorizontalAlignment = xlCenter  ' 中央揃え
+        .Font.Bold = True
+        .ShrinkToFit = True  ' 縮小して全体を表示
     End With
     
     destRow = destRow + 1
@@ -485,64 +452,59 @@ Sub 期間集計_通称別a_最適化版()
         ' ステータスバーを更新
         Application.StatusBar = "通称別直接集計: データ出力中..."
         
-        ' ★最適化：出力データを配列に準備してから一括書き込み
-        Dim outputData() As Variant
-        ReDim outputData(1 To sortIdx, 1 To 28)
-        
-        ' データの書き込み準備
+        ' データの書き込み
         For i = 0 To sortIdx - 1
             key = sortedArr(i)
             
-            ' 基本データを配列に格納
-            outputData(i + 1, 1) = key
-            outputData(i + 1, 2) = dictSums(key)("型替")
-            outputData(i + 1, 3) = dictSums(key)("稼動")
+            ' 基本データを書き込み
+            destSheet.Cells(destRow, 1).Value = key
+            destSheet.Cells(destRow, 2).Value = dictSums(key)("型替")
+            destSheet.Cells(destRow, 3).Value = dictSums(key)("稼働")   ' ★修正された内部名を使用
             
             ' サイクルの平均値を計算
             If dictCounts(key)("サイクル") > 0 Then
-                outputData(i + 1, 4) = dictSums(key)("サイクル") / dictCounts(key)("サイクル")
+                destSheet.Cells(destRow, 4).Value = dictSums(key)("サイクル") / dictCounts(key)("サイクル")
             Else
-                outputData(i + 1, 4) = 0
+                destSheet.Cells(destRow, 4).Value = 0
             End If
             
-            outputData(i + 1, 5) = dictSums(key)("ショット数")
-            outputData(i + 1, 6) = dictSums(key)("不良数")
+            destSheet.Cells(destRow, 5).Value = dictSums(key)("ショット数")
+            destSheet.Cells(destRow, 6).Value = dictSums(key)("不良数")
             
             ' 不良率の計算（不良数÷ショット数）
             If dictSums(key)("ショット数") > 0 Then
-                outputData(i + 1, 7) = dictSums(key)("不良数") / dictSums(key)("ショット数")
+                destSheet.Cells(destRow, 7).Value = dictSums(key)("不良数") / dictSums(key)("ショット数")
             Else
-                outputData(i + 1, 7) = 0
+                destSheet.Cells(destRow, 7).Value = 0
             End If
             
-            ' 不良項目データを配列に格納
-            outputData(i + 1, 8) = dictSums(key)("打出調")
-            outputData(i + 1, 9) = dictSums(key)("ショート")
-            outputData(i + 1, 10) = dictSums(key)("ウエルド")
-            outputData(i + 1, 11) = dictSums(key)("シワ")
-            outputData(i + 1, 12) = dictSums(key)("異物")
-            outputData(i + 1, 13) = dictSums(key)("シルバー")
-            outputData(i + 1, 14) = dictSums(key)("フローマーク")
-            outputData(i + 1, 15) = dictSums(key)("ゴミ付着")
-            outputData(i + 1, 16) = dictSums(key)("GCカス")
-            outputData(i + 1, 17) = dictSums(key)("キズ")
-            outputData(i + 1, 18) = dictSums(key)("ヒケ")
-            outputData(i + 1, 19) = dictSums(key)("糸引き")
-            outputData(i + 1, 20) = dictSums(key)("型汚れ")
-            outputData(i + 1, 21) = dictSums(key)("マクレ")
-            outputData(i + 1, 22) = dictSums(key)("取出不良")
-            outputData(i + 1, 23) = dictSums(key)("割れ剥化")
-            outputData(i + 1, 24) = dictSums(key)("コアカス")
-            outputData(i + 1, 25) = dictSums(key)("その他")
-            outputData(i + 1, 26) = dictSums(key)("チョコ停打出調")
-            outputData(i + 1, 27) = dictSums(key)("検査")
-            outputData(i + 1, 28) = dictSums(key)("流出不良")
+            ' 不良項目データを書き込み（★修正された内部名を使用）
+            destSheet.Cells(destRow, 8).Value = dictSums(key)("打出し")
+            destSheet.Cells(destRow, 9).Value = dictSums(key)("ショート")
+            destSheet.Cells(destRow, 10).Value = dictSums(key)("ウエルド")
+            destSheet.Cells(destRow, 11).Value = dictSums(key)("シワ")
+            destSheet.Cells(destRow, 12).Value = dictSums(key)("異物")
+            destSheet.Cells(destRow, 13).Value = dictSums(key)("シルバー")
+            destSheet.Cells(destRow, 14).Value = dictSums(key)("フローマーク")
+            destSheet.Cells(destRow, 15).Value = dictSums(key)("ゴミ押し")
+            destSheet.Cells(destRow, 16).Value = dictSums(key)("GCカス")
+            destSheet.Cells(destRow, 17).Value = dictSums(key)("キズ")
+            destSheet.Cells(destRow, 18).Value = dictSums(key)("ヒケ")
+            destSheet.Cells(destRow, 19).Value = dictSums(key)("糸引き")
+            destSheet.Cells(destRow, 20).Value = dictSums(key)("型汚れ")
+            destSheet.Cells(destRow, 21).Value = dictSums(key)("マクレ")
+            destSheet.Cells(destRow, 22).Value = dictSums(key)("取出不良")
+            destSheet.Cells(destRow, 23).Value = dictSums(key)("割れ白化")
+            destSheet.Cells(destRow, 24).Value = dictSums(key)("コアカス")
+            destSheet.Cells(destRow, 25).Value = dictSums(key)("その他")
+            destSheet.Cells(destRow, 26).Value = dictSums(key)("チョコ停打出し")
+            destSheet.Cells(destRow, 27).Value = dictSums(key)("検査")
+            destSheet.Cells(destRow, 28).Value = dictSums(key)("流出不良")
+            
+            destRow = destRow + 1
         Next i
         
-        ' ★最適化：配列データを一括で書き込み
-        destSheet.Range("A" & dataStartRow).Resize(sortIdx, 28).Value = outputData
-        
-        dataEndRow = dataStartRow + sortIdx - 1
+        dataEndRow = destRow - 1
     End If
     
     ' テーブルの作成
@@ -605,23 +567,3 @@ ErrorHandler:
            "エラー番号: " & Err.Number, vbCritical
     Resume Cleanup
 End Sub
-
-Private Function 品番通称判定(品番 As String) As String
-    ' 品番から通称を判定する関数
-    ' 品番の文字列パターンから適切な通称を返す
-    
-    Select Case True
-        Case InStr(品番, "TG") > 0
-            品番通称判定 = "TG"
-        Case InStr(品番, "62-28030") > 0 And InStr(品番, "Fr") > 0
-            品番通称判定 = "62-28030Fr"
-        Case InStr(品番, "62-28030") > 0 And InStr(品番, "Rr") > 0
-            品番通称判定 = "62-28030Rr"
-        Case InStr(品番, "62-58050") > 0 And InStr(品番, "Fr") > 0
-            品番通称判定 = "62-58050Fr"
-        Case InStr(品番, "62-58050") > 0 And InStr(品番, "Rr") > 0
-            品番通称判定 = "62-58050Rr"
-        Case Else
-            品番通称判定 = "補給品"
-    End Select
-End Function
