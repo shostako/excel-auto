@@ -27,3 +27,16 @@ Desktop.ini
 test/*.xlsx
 test/*.xlsm
 test/output/
+
+# ローカル設定ファイル
+.env
+.mcp.json
+.mcp/
+
+# 空ディレクトリ
+ready/
+test/
+
+# Claude Code Action開発用（別リポジトリ）
+claude-code-action/
+claude-code-base-action/
