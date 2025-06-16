@@ -13,6 +13,9 @@
 3. `/home/shostako/ClaudeCode/excel-auto/docs/excel-knowledge/techniques/VBA_BASIC_TECHNIQUES.md`
    - 基本テクニック集
 
+4. `/home/shostako/ClaudeCode/excel-auto/docs/excel-knowledge/claude-code/EXCEL_MACRO_KNOWLEDGE_BASE.md`
+   - Claude Code用実戦的マクロ開発ナレッジ（統合版）
+
 これらの内容を踏まえずにコードを書くと、同じ失敗を繰り返すことになる。
 
 ## 基本ルール
