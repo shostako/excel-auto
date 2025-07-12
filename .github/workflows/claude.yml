@@ -1,5 +1,5 @@
-name: Claude Code
-
+name: Claude Code Action Official
+  uses: anthropics/claude-code-action@beta
 on:
   issue_comment:
     types: [created]
