@@ -1,0 +1,430 @@
+Attribute VB_Name = "m手直し_加工_期間対応"
+Option Explicit
+
+' ========================================
+' マクロ名: 転記_手直し_加工_期間対応
+' 処理概要: 「_集計期間加工」テーブルの各期間（1‾6行目）に基づく複数期間集計・転記
+' ソーステーブル: シート「手直し」テーブル「_手直し」
+' 期間テーブル: シート「加工」テーブル「_集計期間加工」
+' ターゲットテーブル: シート「加工」複数テーブル「_手直し加工_{期間}」
+' 参照テーブル: シート「加工」テーブル「_手直し項目加工」
+' 処理方式: 各期間の開始日‾終了日で日付フィルタ後、品番3列による8分類とモード2による項目別集計
+' 転記データ: 数量列の合計値（発生=加工の条件）
+' 出力形式: データがある期間のみテーブルを出力（空白期間はスキップ）
+' ========================================
+
+Sub 転記_手直し_加工_期間対応()
+    ' 最適化設定の保存
+    Dim origScreenUpdating As Boolean
+    Dim origCalculation As XlCalculation
+    Dim origEnableEvents As Boolean
+    Dim origDisplayAlerts As Boolean
+    origScreenUpdating = Application.ScreenUpdating
+    origCalculation = Application.Calculation
+    origEnableEvents = Application.EnableEvents
+    origDisplayAlerts = Application.DisplayAlerts
+
+    ' 最適化設定
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    Application.EnableEvents = False
+    Application.DisplayAlerts = False
+
+    ' エラーハンドリング設定
+    On Error GoTo ErrorHandler
+
+    ' ステータスバー初期化
+    Application.StatusBar = "期間対応転記処理（加工）を開始します..."
+
+    ' ============================================
+    ' シートとテーブルの参照取得
+    ' ============================================
+    Dim wsSource As Worksheet, wsTarget As Worksheet
+    Set wsSource = ThisWorkbook.Worksheets("手直し")
+    Set wsTarget = ThisWorkbook.Worksheets("加工")
+
+    Dim tblSource As ListObject, tblItems As ListObject, tblPeriod As ListObject
+    Set tblSource = wsSource.ListObjects("_手直し")
+    Set tblItems = wsTarget.ListObjects("_手直し項目加工")
+    Set tblPeriod = wsTarget.ListObjects("_集計期間加工")
+
+    ' ============================================
+    ' 期間テーブルの読み込み
+    ' ============================================
+    Dim periodData As Range
+    Set periodData = tblPeriod.DataBodyRange
+
+    If periodData Is Nothing Then
+        MsgBox "「_集計期間加工」テーブルにデータがありません。", vbExclamation
+        GoTo Cleanup
+    End If
+
+    ' 期間情報の配列作成（動的に全行対応）
+    Dim periodCount As Long
+    periodCount = periodData.Rows.Count
+
+    Dim periodInfo() As Variant
+    ReDim periodInfo(1 To periodCount, 1 To 3) ' 期間, 開始日, 終了日
+
+    Dim p As Long
+    For p = 1 To periodCount
+        periodInfo(p, 1) = CStr(periodData.Cells(p, 1).Value) ' 期間
+        periodInfo(p, 2) = periodData.Cells(p, 2).Value       ' 開始日
+        periodInfo(p, 3) = periodData.Cells(p, 3).Value       ' 終了日
+    Next p
+
+    ' ============================================
+    ' ソーステーブルの列インデックス取得
+    ' ============================================
+    Dim srcData As Range
+    Set srcData = tblSource.DataBodyRange
+
+    If srcData Is Nothing Then
+        Application.StatusBar = "ソーステーブルにデータがありません"
+        GoTo Cleanup
+    End If
+
+    Dim colHizuke As Long, colHinban3 As Long, colHassei As Long, colMode2 As Long, colSuuryou As Long
+    colHizuke = tblSource.ListColumns("日付").Index
+    colHinban3 = tblSource.ListColumns("品番3").Index
+    colHassei = tblSource.ListColumns("発生").Index
+    colMode2 = tblSource.ListColumns("モード2").Index
+    colSuuryou = tblSource.ListColumns("数量").Index
+
+    ' ============================================
+    ' 項目テーブルから項目リスト取得（動的）
+    ' ============================================
+    Dim itemsData As Range
+    Set itemsData = tblItems.DataBodyRange
+
+    Dim itemsList As Object
+    Set itemsList = CreateObject("Scripting.Dictionary")
+
+    If Not itemsData Is Nothing Then
+        Dim i As Long
+        For i = 1 To itemsData.Rows.Count
+            Dim itemName As String
+            itemName = CStr(itemsData.Cells(i, 1).Value)
+            If Len(itemName) > 0 Then
+                itemsList(itemName) = i ' 項目名と順序を記録
+            End If
+        Next i
+    End If
+
+    ' 「その他」項目を最後に追加（存在しない場合のみ）
+    If Not itemsList.Exists("その他") Then
+        itemsList("その他") = itemsList.Count + 1
+    End If
+
+    ' ============================================
+    ' 品番分類リストの定義（LH→RHの順序）
+    ' ============================================
+    Dim hinbanList As Object
+    Set hinbanList = CreateObject("Scripting.Dictionary")
+    hinbanList("58050FrLH") = 1
+    hinbanList("58050FrRH") = 2
+    hinbanList("58050RrLH") = 3
+    hinbanList("58050RrRH") = 4
+    hinbanList("28050FrLH") = 5
+    hinbanList("28050FrRH") = 6
+    hinbanList("28050RrLH") = 7
+    hinbanList("28050RrRH") = 8
+
+    ' 項目リストの順序ソート
+    Dim sortedItems() As String
+    ReDim sortedItems(0 To itemsList.Count - 1)
+
+    Dim itemKey As Variant
+    For Each itemKey In itemsList.Keys
+        sortedItems(itemsList(itemKey) - 1) = CStr(itemKey)
+    Next itemKey
+
+    ' ============================================
+    ' 既存の出力テーブルとタイトル行の完全削除
+    ' ============================================
+    On Error Resume Next
+
+    ' 既存の期間別テーブルを削除（"_手直し加工_"で始まるテーブル全て）
+    Dim tbl As ListObject
+    Dim tblsToDelete As Collection
+    Set tblsToDelete = New Collection
+
+    For Each tbl In wsTarget.ListObjects
+        If left(tbl.Name, 7) = "_手直し加工_" Then
+            tblsToDelete.Add tbl
+        End If
+    Next tbl
+
+    Dim j As Long
+    For j = 1 To tblsToDelete.Count
+        tblsToDelete(j).Range.EntireRow.Delete
+    Next j
+
+    ' 既存のタイトル行（「手直し_加工」）を検索して行削除
+    Dim searchRange As Range
+    Set searchRange = wsTarget.UsedRange
+    If Not searchRange Is Nothing Then
+        Dim foundCell As Range
+        Set foundCell = searchRange.Find("手直し_加工", LookIn:=xlValues, LookAt:=xlPart)
+        Do While Not foundCell Is Nothing
+            foundCell.EntireRow.Delete
+            Set foundCell = searchRange.Find("手直し_加工", LookIn:=xlValues, LookAt:=xlPart)
+        Loop
+    End If
+
+    Err.Clear
+    On Error GoTo ErrorHandler
+
+    ' ============================================
+    ' 動的な出力開始位置の決定（2つのテーブルの最終行を比較）
+    ' ============================================
+    Dim itemsTableLastRow As Long
+    If Not itemsData Is Nothing Then
+        itemsTableLastRow = tblItems.Range.Row + tblItems.Range.Rows.Count - 1
+    Else
+        itemsTableLastRow = tblItems.Range.Row
+    End If
+
+    Dim periodTableLastRow As Long
+    If Not periodData Is Nothing Then
+        periodTableLastRow = tblPeriod.Range.Row + tblPeriod.Range.Rows.Count - 1
+    Else
+        periodTableLastRow = tblPeriod.Range.Row
+    End If
+
+    ' 2つのテーブルのうち、より下にある方を基準に3行空ける
+    Dim baseRow As Long
+    If itemsTableLastRow > periodTableLastRow Then
+        baseRow = itemsTableLastRow
+    Else
+        baseRow = periodTableLastRow
+    End If
+
+    Dim currentRow As Long
+    currentRow = baseRow + 3
+
+    ' ============================================
+    ' 各期間の処理ループ
+    ' ============================================
+    For p = 1 To periodCount
+        Application.StatusBar = "期間 " & p & "/" & periodCount & " を処理中..."
+
+        Dim periodName As String, startDate As Date, endDate As Date
+        periodName = periodInfo(p, 1)
+        startDate = CDate(periodInfo(p, 2))
+        endDate = CDate(periodInfo(p, 3))
+
+        ' ============================================
+        ' 空白期間判定フラグ
+        ' ============================================
+        Dim hasData As Boolean
+        hasData = False
+
+        ' ============================================
+        ' 集計用辞書の初期化
+        ' ============================================
+        Dim aggregateData As Object
+        Set aggregateData = CreateObject("Scripting.Dictionary")
+
+        ' 辞書キーの初期化（項目×品番のマトリックス）
+        Dim hinbanKey As Variant
+        For Each itemKey In itemsList.Keys
+            For Each hinbanKey In hinbanList.Keys
+                Dim dictKey As String
+                dictKey = CStr(itemKey) & "|" & CStr(hinbanKey)
+                aggregateData(dictKey) = 0
+            Next hinbanKey
+        Next itemKey
+
+        ' ============================================
+        ' ソーステーブルの集計処理（日付フィルタ付き）
+        ' ============================================
+        For i = 1 To srcData.Rows.Count
+            ' 日付チェック
+            Dim rowDate As Date
+            If IsDate(srcData.Cells(i, colHizuke).Value) Then
+                rowDate = CDate(srcData.Cells(i, colHizuke).Value)
+
+                If rowDate >= startDate And rowDate <= endDate Then
+                    ' 条件チェック：発生=加工
+                    Dim hassei As String
+                    hassei = CStr(srcData.Cells(i, colHassei).Value)
+
+                    If hassei = "加工" Then
+                        ' 品番3チェック
+                        Dim hinban3 As String
+                        hinban3 = CStr(srcData.Cells(i, colHinban3).Value)
+
+                        If hinbanList.Exists(hinban3) Then
+                            ' モード2取得と項目マッピング
+                            Dim mode2 As String
+                            mode2 = CStr(srcData.Cells(i, colMode2).Value)
+
+                            Dim targetItem As String
+                            If itemsList.Exists(mode2) Then
+                                targetItem = mode2
+                            Else
+                                targetItem = "その他"
+                            End If
+
+                            ' 数量取得と加算
+                            Dim suuryou As Double
+                            If IsNumeric(srcData.Cells(i, colSuuryou).Value) Then
+                                suuryou = CDbl(srcData.Cells(i, colSuuryou).Value)
+
+                                ' データありフラグ
+                                If suuryou <> 0 Then
+                                    hasData = True
+                                End If
+
+                                dictKey = targetItem & "|" & hinban3
+                                aggregateData(dictKey) = aggregateData(dictKey) + suuryou
+                            End If
+                        End If
+                    End If
+                End If
+            End If
+        Next i
+
+        ' ============================================
+        ' 空白期間スキップ処理
+        ' ============================================
+        If Not hasData Then
+            Application.StatusBar = "期間 " & p & " はデータ無しのためスキップします..."
+            GoTo NextPeriod
+        End If
+
+        ' ============================================
+        ' タイトル行の生成と出力
+        ' ============================================
+        Dim titleText As String
+        titleText = "手直し_加工_" & periodName & "_" & Format(startDate, "m/d") & "‾" & Format(endDate, "m/d")
+
+        ' タイトルセルの書式設定
+        With wsTarget.Cells(currentRow, 1)
+            .Value = titleText
+            .ShrinkToFit = False  ' 縮小して全体を表示しない
+            .WrapText = False     ' 折り返しなし
+            .Font.Bold = True     ' 太字
+            .Font.Size = 12       ' フォントサイズ12
+        End With
+
+        ' テーブル開始位置
+        Dim startCell As Range
+        Set startCell = wsTarget.Cells(currentRow + 1, 1)
+
+        ' ============================================
+        ' データ配列の作成（+1は集計行用）
+        ' ============================================
+        Dim outputData() As Variant
+        ReDim outputData(0 To itemsList.Count + 1, 0 To 8)
+
+        ' ヘッダー行設定
+        Dim headers() As String
+        ReDim headers(0 To 8)
+        headers(0) = "項目"
+        headers(1) = "58050FrLH"
+        headers(2) = "58050FrRH"
+        headers(3) = "58050RrLH"
+        headers(4) = "58050RrRH"
+        headers(5) = "28050FrLH"
+        headers(6) = "28050FrRH"
+        headers(7) = "28050RrLH"
+        headers(8) = "28050RrRH"
+
+        For i = 0 To 8
+            outputData(0, i) = headers(i)
+        Next i
+
+        ' 各列の合計用（期間ごとに初期化）
+        Dim colSums(1 To 8) As Double
+        Dim csIdx As Long
+        For csIdx = 1 To 8
+            colSums(csIdx) = 0
+        Next csIdx
+
+        ' データ行設定
+        For i = 0 To UBound(sortedItems)
+            outputData(i + 1, 0) = sortedItems(i) ' 項目名
+
+            ' 各品番の数量
+            For Each hinbanKey In hinbanList.Keys
+                dictKey = sortedItems(i) & "|" & CStr(hinbanKey)
+                Dim colValue As Double
+                colValue = aggregateData(dictKey)
+                outputData(i + 1, hinbanList(hinbanKey)) = colValue
+                colSums(hinbanList(hinbanKey)) = colSums(hinbanList(hinbanKey)) + colValue
+            Next hinbanKey
+        Next i
+
+        ' ============================================
+        ' 集計行の追加
+        ' ============================================
+        Dim totalRow As Long
+        totalRow = itemsList.Count + 1
+        outputData(totalRow, 0) = "合計"
+        For i = 1 To 8
+            outputData(totalRow, i) = colSums(i)
+        Next i
+
+        ' ============================================
+        ' テーブル範囲への書き込み
+        ' ============================================
+        Dim tableRange As Range
+        Set tableRange = startCell.Resize(UBound(outputData, 1) + 1, UBound(outputData, 2) + 1)
+        tableRange.Value = outputData
+
+        ' ============================================
+        ' ListObjectとして設定
+        ' ============================================
+        Dim newTable As ListObject
+        Set newTable = wsTarget.ListObjects.Add(xlSrcRange, tableRange, , xlYes)
+        newTable.Name = "_手直し加工_" & periodName
+        newTable.ShowAutoFilter = False ' フィルターボタンを非表示
+        newTable.TableStyle = "TableStyleLight16" ' テーブルスタイル設定
+
+        ' ============================================
+        ' 書式設定：フォント、サイズ、列幅、表示形式
+        ' ============================================
+        With newTable.Range
+            .Font.Name = "游ゴシック"
+            .Font.Size = 11
+            .ShrinkToFit = True ' 縮小して全体を表示
+        End With
+
+        ' 列幅設定
+        For i = 1 To newTable.Range.Columns.Count
+            newTable.Range.Columns(i).ColumnWidth = 8
+        Next i
+
+        ' 次のテーブル位置を計算（現在のテーブル + 3行間隔）
+        currentRow = startCell.Row + UBound(outputData, 1) + 3
+
+NextPeriod:
+    Next p
+
+    ' 処理完了のステータスバー表示
+    Application.StatusBar = "期間対応転記処理（加工）が完了しました（" & periodCount & "期間）"
+    Application.Wait Now + TimeValue("00:00:01")
+
+    GoTo Cleanup
+
+ErrorHandler:
+    ' エラー情報の詳細化
+    Dim errNum As Long, errDesc As String
+    errNum = Err.Number
+    errDesc = Err.Description
+    Err.Clear
+
+    MsgBox "エラーが発生しました" & vbCrLf & _
+           "エラー番号: " & errNum & vbCrLf & _
+           "詳細: " & errDesc, vbCritical, "転記_手直し_加工_期間対応 エラー"
+
+Cleanup:
+    ' 設定を確実に復元
+    Application.StatusBar = False
+    Application.ScreenUpdating = origScreenUpdating
+    Application.Calculation = origCalculation
+    Application.EnableEvents = origEnableEvents
+    Application.DisplayAlerts = origDisplayAlerts
+End Sub
