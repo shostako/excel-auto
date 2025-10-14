@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="1000" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- グラデーション定義 -->
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a90e2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#357abd;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dataGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7ed321;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5ba517;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="monthlyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f5a623;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#bd7a00;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="analysisGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#bd10e0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b0aa6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 背景 -->
+  <rect width="1200" height="1000" fill="#f8f9fa" stroke="none"/>
+  
+  <!-- タイトル -->
+  <text x="600" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#2c3e50">
+    加工作業者別マクロ実行フロー
+  </text>
+  <text x="600" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#7f8c8d">
+    5つのマクロによる連携処理システム
+  </text>
+  
+  <!-- 凡例 -->
+  <g transform="translate(50, 80)">
+    <text x="0" y="15" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#2c3e50">処理区分:</text>
+    <rect x="70" y="5" width="15" height="15" fill="url(#stepGrad)" rx="2"/>
+    <text x="90" y="16" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">日次処理</text>
+    <rect x="150" y="5" width="15" height="15" fill="url(#monthlyGrad)" rx="2"/>
+    <text x="170" y="16" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">月初処理</text>
+    <rect x="230" y="5" width="15" height="15" fill="url(#analysisGrad)" rx="2"/>
+    <text x="250" y="16" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">分析処理</text>
+    <rect x="310" y="5" width="15" height="15" fill="url(#dataGrad)" rx="2"/>
+    <text x="330" y="16" font-family="Arial, sans-serif" font-size="12" fill="#2c3e50">データテーブル</text>
+  </g>
+  
+  <!-- ステップ1: 日別集計 -->
+  <g transform="translate(100, 150)">
+    <rect x="0" y="0" width="200" height="80" fill="url(#stepGrad)" stroke="#2c3e50" stroke-width="2" rx="8"/>
+    <text x="100" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">ステップ1</text>
+    <text x="100" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">日別集計_加工作業者別</text>
+    <text x="100" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">日次実行</text>
+  </g>
+  
+  <!-- データテーブル1 -->
+  <g transform="translate(400, 160)">
+    <rect x="0" y="0" width="180" height="60" fill="url(#dataGrad)" stroke="#27ae60" stroke-width="2" rx="6"/>
+    <text x="90" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">_加工作業者別a</text>
+    <text x="90" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">日別集計結果</text>
+  </g>
+  
+  <!-- ステップ2: 復元処理（月初） -->
+  <g transform="translate(700, 50)">
+    <rect x="0" y="0" width="200" height="80" fill="url(#monthlyGrad)" stroke="#e67e22" stroke-width="2" rx="8"/>
+    <text x="100" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">ステップ2</text>
+    <text x="100" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">復元_作業者列名</text>
+    <text x="100" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">月初のみ実行</text>
+  </g>
+  
+  <!-- ステップ3: 転記処理 -->
+  <g transform="translate(100, 300)">
+    <rect x="0" y="0" width="200" height="80" fill="url(#stepGrad)" stroke="#2c3e50" stroke-width="2" rx="8"/>
+    <text x="100" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">ステップ3</text>
+    <text x="100" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">転記_シート加工作業者別</text>
+    <text x="100" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">日次実行</text>
+  </g>
+  
+  <!-- データテーブル2 -->
+  <g transform="translate(400, 310)">
+    <rect x="0" y="0" width="180" height="60" fill="url(#dataGrad)" stroke="#27ae60" stroke-width="2" rx="6"/>
+    <text x="90" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">_加工作業者別b</text>
+    <text x="90" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">作業者別展開テーブル</text>
+  </g>
+  
+  <!-- ステップ4: 上位者抽出 -->
+  <g transform="translate(100, 450)">
+    <rect x="0" y="0" width="200" height="80" fill="url(#analysisGrad)" stroke="#8e44ad" stroke-width="2" rx="8"/>
+    <text x="100" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">ステップ4</text>
+    <text x="100" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">転記_集計表_作業者名</text>
+    <text x="100" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">分析時実行</text>
+  </g>
+  
+  <!-- 集計表58行目 -->
+  <g transform="translate(400, 460)">
+    <rect x="0" y="0" width="180" height="60" fill="url(#dataGrad)" stroke="#27ae60" stroke-width="2" rx="6"/>
+    <text x="90" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">集計表58行目</text>
+    <text x="90" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">上位5名の作業者名</text>
+  </g>
+  
+  <!-- ステップ5: 詳細転記 -->
+  <g transform="translate(100, 600)">
+    <rect x="0" y="0" width="200" height="80" fill="url(#analysisGrad)" stroke="#8e44ad" stroke-width="2" rx="8"/>
+    <text x="100" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="white">ステップ5</text>
+    <text x="100" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">転記_集計表_加工作業者別</text>
+    <text x="100" y="60" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">分析時実行</text>
+  </g>
+  
+  <!-- 最終出力 -->
+  <g transform="translate(400, 610)">
+    <rect x="0" y="0" width="180" height="60" fill="url(#dataGrad)" stroke="#27ae60" stroke-width="2" rx="6"/>
+    <text x="90" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="white">集計表59-65行目</text>
+    <text x="90" y="40" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="white">詳細指標データ</text>
+  </g>
+  
+  <!-- 矢印: ステップ1 → データテーブル1 -->
+  <path d="M 300 190 L 380 190" stroke="#2c3e50" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 矢印: データテーブル1 → ステップ3 -->
+  <path d="M 400 220 Q 350 260 300 340" stroke="#2c3e50" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 矢印: ステップ3 → データテーブル2 -->
+  <path d="M 300 340 L 380 340" stroke="#2c3e50" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 矢印: データテーブル1 → ステップ4 -->
+  <path d="M 400 220 Q 250 350 200 450" stroke="#8e44ad" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 矢印: ステップ4 → 集計表58行目 -->
+  <path d="M 300 490 L 380 490" stroke="#8e44ad" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 矢印: 集計表58行目 + データテーブル2 → ステップ5 -->
+  <path d="M 400 520 Q 350 560 300 640" stroke="#8e44ad" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 矢印: ステップ5 → 最終出力 -->
+  <path d="M 300 640 L 380 640" stroke="#8e44ad" stroke-width="3" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <!-- 矢印: 月初処理 → データテーブル2 -->
+  <path d="M 800 130 Q 800 220 590 340" stroke="#e67e22" stroke-width="3" fill="none" marker-end="url(#arrowhead)" stroke-dasharray="10,5"/>
+  
+  <!-- 矢印マーカー定義 -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c3e50"/>
+    </marker>
+  </defs>
+  
+  <!-- 処理詳細ボックス -->
+  <g transform="translate(700, 200)">
+    <rect x="0" y="0" width="350" height="450" fill="white" stroke="#bdc3c7" stroke-width="1" rx="8"/>
+    <text x="175" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">処理詳細</text>
+    
+    <!-- ステップ1詳細 -->
+    <text x="15" y="55" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4a90e2">ステップ1: 日別集計</text>
+    <text x="15" y="75" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 加工1,加工2データを日付・作業者で集計</text>
+    <text x="15" y="90" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 実績、不良、稼働時間、段取時間を合計</text>
+    
+    <!-- ステップ2詳細 -->
+    <text x="15" y="115" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#f5a623">ステップ2: 列名復元（月初）</text>
+    <text x="15" y="135" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 作業者列名をA-J形式にリセット</text>
+    <text x="15" y="150" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 10スロット × 8列パターン = 80列処理</text>
+    
+    <!-- ステップ3詳細 -->
+    <text x="15" y="175" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#4a90e2">ステップ3: 動的割り当て＋転記</text>
+    <text x="15" y="195" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 新規作業者の自動検出</text>
+    <text x="15" y="210" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 空きスロット(A-J)への動的割り当て</text>
+    <text x="15" y="225" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 稼働時間（稼働＋段取）と実績を転記</text>
+    
+    <!-- ステップ4詳細 -->
+    <text x="15" y="250" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#bd10e0">ステップ4: 上位者抽出</text>
+    <text x="15" y="270" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 指定日付の実績上位5名を抽出</text>
+    <text x="15" y="285" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 一時シートでソート処理実行</text>
+    <text x="15" y="300" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 集計表D58,F58,H58,J58,L58に転記</text>
+    
+    <!-- ステップ5詳細 -->
+    <text x="15" y="325" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#bd10e0">ステップ5: 詳細指標転記</text>
+    <text x="15" y="345" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 上位5名の詳細指標を転記</text>
+    <text x="15" y="360" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 7種類指標×5名=35セルに転記</text>
+    <text x="15" y="375" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">• 集計表59-65行目に配置</text>
+    
+    <!-- 実行タイミング -->
+    <text x="15" y="405" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c3e50">実行タイミング</text>
+    <text x="15" y="425" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">日次: ステップ1→3 / 月初: ステップ2 / 分析: ステップ4→5</text>
+  </g>
+  
+  <!-- データソース -->
+  <g transform="translate(50, 750)">
+    <rect x="0" y="0" width="1100" height="180" fill="#ecf0f1" stroke="#bdc3c7" stroke-width="1" rx="8"/>
+    <text x="550" y="25" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#2c3e50">データテーブル構造</text>
+    
+    <!-- 入力データ -->
+    <g transform="translate(20, 40)">
+      <rect x="0" y="0" width="200" height="120" fill="white" stroke="#95a5a6" stroke-width="1" rx="4"/>
+      <text x="100" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#2c3e50">クエリ全工程</text>
+      <text x="10" y="40" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">日付 | 工程 | 作業者</text>
+      <text x="10" y="55" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">実績 | 段取時間 | 稼働時間</text>
+      <text x="10" y="70" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">不良</text>
+      <text x="100" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7f8c8d">入力データ</text>
+    </g>
+    
+    <!-- 中間データ1 -->
+    <g transform="translate(250, 40)">
+      <rect x="0" y="0" width="200" height="120" fill="white" stroke="#27ae60" stroke-width="2" rx="4"/>
+      <text x="100" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#27ae60">_加工作業者別a</text>
+      <text x="10" y="40" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">日付 | 作業者 | 実績</text>
+      <text x="10" y="55" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">不良 | 稼働時間 | 段取時間</text>
+      <text x="100" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7f8c8d">集計結果</text>
+    </g>
+    
+    <!-- 中間データ2 -->
+    <g transform="translate(480, 40)">
+      <rect x="0" y="0" width="200" height="120" fill="white" stroke="#27ae60" stroke-width="2" rx="4"/>
+      <text x="100" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#27ae60">_加工作業者別b</text>
+      <text x="10" y="40" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">日付 | 山田稼働時間 | 山田実績</text>
+      <text x="10" y="55" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">佐藤稼働時間 | 佐藤実績...</text>
+      <text x="100" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7f8c8d">作業者別展開</text>
+    </g>
+    
+    <!-- 出力データ1 -->
+    <g transform="translate(710, 40)">
+      <rect x="0" y="0" width="170" height="120" fill="white" stroke="#e74c3c" stroke-width="2" rx="4"/>
+      <text x="85" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e74c3c">集計表58行目</text>
+      <text x="10" y="40" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">D58: 山田</text>
+      <text x="10" y="55" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">F58: 佐藤</text>
+      <text x="10" y="70" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">H58: 田中...</text>
+      <text x="85" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7f8c8d">上位5名</text>
+    </g>
+    
+    <!-- 最終出力 -->
+    <g transform="translate(910, 40)">
+      <rect x="0" y="0" width="170" height="120" fill="white" stroke="#e74c3c" stroke-width="2" rx="4"/>
+      <text x="85" y="20" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#e74c3c">集計表59-65行目</text>
+      <text x="10" y="40" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">59: 実績値</text>
+      <text x="10" y="55" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">60: 日出来高ｻｲｸﾙ</text>
+      <text x="10" y="70" font-family="Arial, sans-serif" font-size="10" fill="#2c3e50">61-65: その他指標</text>
+      <text x="85" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" fill="#7f8c8d">詳細指標</text>
+    </g>
+  </g>
+  
+  <!-- フッター -->
+  <text x="600" y="970" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#7f8c8d">
+    ※実線=通常フロー、破線=月初処理、色分け=処理区分
+  </text>
+</svg>

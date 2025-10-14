@@ -1,0 +1,43 @@
+#!/bin/bash
+# bas2sjis - UTF-8のbasファイルをShift-JISに変換してmacros/に出力
+# 使用方法: bas2sjis src/マクロ名.bas
+
+if [ $# -eq 0 ]; then
+    echo "使用方法: bas2sjis <basファイル>"
+    echo "例: bas2sjis src/m期間集計_通称別a.bas"
+    exit 1
+fi
+
+INPUT_FILE="$1"
+BASENAME=$(basename "$INPUT_FILE" .bas)
+OUTPUT_FILE="macros/${BASENAME}.bas"
+
+# 入力ファイルの存在確認
+if [ ! -f "$INPUT_FILE" ]; then
+    echo "エラー: ファイル '$INPUT_FILE' が見つかりません"
+    exit 1
+fi
+
+# macros ディレクトリの存在確認・作成
+if [ ! -d "macros" ]; then
+    mkdir -p macros
+    echo "macros ディレクトリを作成しました"
+fi
+
+# 一時ファイルでCRLF→LF変換してからShift-JIS変換
+TEMP_FILE=$(mktemp)
+sed 's/\r$//' "$INPUT_FILE" > "$TEMP_FILE"
+
+# UTF-8 → Shift-JIS変換（変換できない文字は置換）
+iconv -f UTF-8 -t SHIFT-JIS//TRANSLIT "$TEMP_FILE" > "$OUTPUT_FILE"
+CONVERT_RESULT=$?
+
+# 一時ファイル削除
+rm -f "$TEMP_FILE"
+
+if [ $CONVERT_RESULT -eq 0 ]; then
+    echo "変換完了: $INPUT_FILE → $OUTPUT_FILE"
+else
+    echo "エラー: 変換に失敗しました"
+    exit 1
+fi
