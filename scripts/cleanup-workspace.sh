@@ -6,6 +6,12 @@ set -e
 
 cd /home/shostako/ClaudeCode/excel-auto
 
+# --autoオプションの処理
+AUTO_MODE=false
+if [ "$1" = "--auto" ]; then
+    AUTO_MODE=true
+fi
+
 echo "=========================================="
 echo "ワークスペースクリーンアップ"
 echo "=========================================="
@@ -45,7 +51,15 @@ fi
 
 echo
 echo "=========================================="
-read -p "削除してGitコミットしますか？ (y/n): " confirm
+
+# --autoモードの場合は確認をスキップ
+if [ "$AUTO_MODE" = true ]; then
+    confirm="y"
+    echo "自動モード: 削除とコミットを実行します"
+else
+    read -p "削除してGitコミットしますか？ (y/n): " confirm
+fi
+
 echo
 
 if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
