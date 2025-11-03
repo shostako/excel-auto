@@ -52,7 +52,7 @@ Private Sub TB_Change()
         ' 数量は Change 時には特に何もしない (KeyPress で制御)
 
     Case "Return"
-        ' 差戻しは特に変換処理なし（数値1のみ許可）
+        ' 差戻しは特に変換処理なし（数値0/1のみ許可）
     End Select
 End Sub
 
@@ -90,17 +90,20 @@ Private Sub TB_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)
             End Select
 
         Case "Return"
-            ' スペースキーでトグル切り替え
+            ' スペースキーで0→1→0循環切り替え
             If KeyAscii = 32 Then  ' Space
-                If TB.Value = "" Then
-                    TB.Value = "1"
-                Else
-                    TB.Value = ""
-                End If
+                Select Case TB.Value
+                    Case "", "0"
+                        TB.Value = "1"  ' 0→1 または 空→1
+                    Case "1"
+                        TB.Value = "0"  ' 1→0
+                    Case Else
+                        TB.Value = "0"  ' その他→0（安全のため）
+                End Select
                 KeyAscii = 0  ' スペース入力をキャンセル
-            ' 数値の1のみ許可
-            ElseIf KeyAscii = 49 Then  ' 1
-                ' 1を許可（何もしない）
+            ' 数値の0または1のみ許可
+            ElseIf KeyAscii = 48 Or KeyAscii = 49 Then  ' 0 or 1
+                ' 0または1を許可（何もしない）
             ElseIf KeyAscii = 8 Then  ' Backspace
                 ' Backspaceを許可（何もしない）
             Else
@@ -196,14 +199,14 @@ Private Sub TB_Exit(ByVal Cancel As MSForms.ReturnBoolean)
         End If
 
     Case "Return"
-        ' 差戻しは「1」または空白のみ許可
+        ' 差戻しは「0」「1」または空白のみ許可（空白は0として扱う）
         If v = "" Then
-            TB.Value = ""  ' 空白OK
-        ElseIf v = "1" Then
+            TB.Value = "0"  ' 空白を0に置き換え
+        ElseIf v = "0" Or v = "1" Then
             TB.Value = v
         Else
-            MsgBox "差戻しは「1」を入力してください。空白も可能です。", vbExclamation
-            TB.Value = ""
+            MsgBox "差戻しは「0」または「1」を入力してください。", vbExclamation
+            TB.Value = "0"
             TB.SetFocus
             Cancel = True
         End If

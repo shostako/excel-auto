@@ -157,14 +157,14 @@ Private Sub UserForm_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift
                     End If
                 End If
             ElseIf ctrl.Tag = "Return" Then
-                ' 差戻し入力チェック（1、空白のみ）
+                ' 差戻し入力チェック（0、1のみ）
                 Dim retCtrl As MSForms.TextBox
                 Set retCtrl = ctrl
                 If retCtrl.Value <> "" Then
-                    If retCtrl.Value <> "1" Then
-                        MsgBox "差戻しは「1」を入力してください。空白も可能です。", vbExclamation
+                    If retCtrl.Value <> "0" And retCtrl.Value <> "1" Then
+                        MsgBox "差戻しは「0」または「1」を入力してください。", vbExclamation
                         KeyCode = 0
-                        retCtrl.Value = ""
+                        retCtrl.Value = "0"
                         retCtrl.SetFocus
                     End If
                 End If
@@ -572,7 +572,9 @@ Private Sub CommandButton2_Click()
         Dim zVal As String: zVal = Me.Controls("TextBoxZone_" & i).Value
         Dim nVal As String: nVal = Me.Controls("TextBoxNum_" & i).Value
         Dim qVal As String: qVal = Me.Controls("TextBoxQty_" & i).Value
-        Dim rVal As String: rVal = Me.Controls("TextBoxReturn_" & i).Value  ' 差戻し取得
+        ' 差戻し値をInteger型で取得（0または1）
+        Dim rVal As Integer
+        rVal = IIf(Me.Controls("TextBoxReturn_" & i).Value = "1", 1, 0)
 
         If zVal <> "" And nVal <> "" And qVal <> "" Then
             With tbl.ListRows(rowIndex)
@@ -587,7 +589,7 @@ Private Sub CommandButton2_Click()
                 .Range.Cells(1, tbl.ListColumns("ゾーン").Index).Value = zVal
                 .Range.Cells(1, tbl.ListColumns("番号").Index).Value = nVal
                 .Range.Cells(1, tbl.ListColumns("数量").Index).Value = qVal
-                .Range.Cells(1, tbl.ListColumns("差戻し").Index).Value = rVal  ' 差戻し転記
+                .Range.Cells(1, tbl.ListColumns("差戻し").Index).Value = rVal  ' 差戻しを数値(0/1)で転記
             End With
             rowIndex = rowIndex + 1
         End If
