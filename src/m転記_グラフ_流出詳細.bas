@@ -1,0 +1,321 @@
+Attribute VB_Name = "m転記_グラフ_流出詳細"
+Option Explicit
+
+' グラフ表示用の流出詳細データを集計・転記するマクロ
+' 期間指定で_手直しと_廃棄テーブルから条件別に集計し、_入力テーブルに転記
+Sub 転記_グラフ_流出詳細()
+    Application.ScreenUpdating = False
+    Application.StatusBar = "流出詳細データを集計中..."
+
+    On Error GoTo ErrorHandler
+
+    ' 期間テーブルから開始日・終了日を取得
+    Dim ws期間 As Worksheet
+    Set ws期間 = ThisWorkbook.Worksheets("グラフ")
+
+    Dim lo期間 As ListObject
+    Set lo期間 = ws期間.ListObjects("_期間_滝")
+
+    Dim 開始日 As Date, 終了日 As Date
+    開始日 = lo期間.ListColumns("開始日").DataBodyRange(1, 1).Value
+    終了日 = lo期間.ListColumns("終了日").DataBodyRange(1, 1).Value
+
+    ' === _ロット数量テーブルから稼働日数をカウント ===
+    Application.StatusBar = "稼働日数を集計中..."
+
+    Dim wsロット As Worksheet
+    Set wsロット = ThisWorkbook.Worksheets("ロット数量")
+
+    Dim loロット As ListObject
+    Set loロット = wsロット.ListObjects("_ロット数量")
+
+    Dim 稼働日数 As Long
+    稼働日数 = 0
+
+    If Not loロット.DataBodyRange Is Nothing Then
+        Dim arrロット As Variant
+        arrロット = loロット.DataBodyRange.Value
+
+        ' 列インデックス取得
+        Dim colロ_日付 As Long
+        colロ_日付 = loロット.ListColumns("日付").Index
+
+        ' ユニークな日付をカウントするためのDictionary
+        Dim dictロット As Object
+        Set dictロット = CreateObject("Scripting.Dictionary")
+
+        Dim j As Long
+        For j = 1 To UBound(arrロット, 1)
+            ' 日付チェック
+            If IsDate(arrロット(j, colロ_日付)) Then
+                Dim ロット日付 As Date
+                ロット日付 = arrロット(j, colロ_日付)
+
+                If ロット日付 >= 開始日 And ロット日付 <= 終了日 Then
+                    ' Dictionary にユニークな日付を格納
+                    If Not dictロット.Exists(CLng(ロット日付)) Then
+                        dictロット.Add CLng(ロット日付), True
+                    End If
+                End If
+            End If
+        Next j
+
+        ' 稼働日数 = ユニークな日付の数
+        稼働日数 = dictロット.Count
+    End If
+
+    ' _期間_滝テーブルの「稼働日数」列に転記
+    lo期間.ListColumns("稼働日数").DataBodyRange(1, 1).Value = 稼働日数
+
+    ' 集計用変数初期化
+    Dim 成形_流出 As Long, 塗装発見_流出 As Long, 塗装_流出 As Long, 加工流出総数_流出 As Long
+    Dim 成形_廃棄 As Long, 塗装_廃棄 As Long, 加工流出総数_廃棄 As Long
+    Dim 差戻し_成形 As Long, 差戻し_塗装 As Long
+    Dim 加工手直し_成形 As Long, 加工手直し_塗装 As Long
+
+    ' === _手直しテーブルから流出数を集計 ===
+    Application.StatusBar = "手直しデータを集計中..."
+
+    Dim ws手直し As Worksheet
+    Set ws手直し = ThisWorkbook.Worksheets("手直し")
+
+    Dim lo手直し As ListObject
+    Set lo手直し = ws手直し.ListObjects("_手直し")
+
+    If Not lo手直し.DataBodyRange Is Nothing Then
+        Dim arr手直し As Variant
+        arr手直し = lo手直し.DataBodyRange.Value
+
+        ' 列インデックス取得
+        Dim col手_日付 As Long, col手_発見 As Long, col手_発生 As Long, col手_数量 As Long, col手_差戻し As Long
+        col手_日付 = lo手直し.ListColumns("日付").Index
+        col手_発見 = lo手直し.ListColumns("発見2").Index
+        col手_発生 = lo手直し.ListColumns("発生").Index
+        col手_数量 = lo手直し.ListColumns("数量").Index
+        col手_差戻し = lo手直し.ListColumns("差戻し").Index
+
+        Dim i As Long
+        For i = 1 To UBound(arr手直し, 1)
+            ' 日付チェック
+            If IsDate(arr手直し(i, col手_日付)) Then
+                Dim 日付 As Date
+                日付 = arr手直し(i, col手_日付)
+
+                If 日付 >= 開始日 And 日付 <= 終了日 Then
+                    Dim 発見 As String, 発生 As String, 数量 As Long, 差戻しフラグ As Long
+                    発見 = Trim(arr手直し(i, col手_発見) & "")
+                    発生 = Trim(arr手直し(i, col手_発生) & "")
+                    数量 = 0
+                    If IsNumeric(arr手直し(i, col手_数量)) Then
+                        数量 = CLng(arr手直し(i, col手_数量))
+                    End If
+
+                    ' 差戻しフラグ取得（0/1形式）
+                    差戻しフラグ = 0
+                    If IsNumeric(arr手直し(i, col手_差戻し)) Then
+                        差戻しフラグ = CLng(arr手直し(i, col手_差戻し))
+                    End If
+
+                    ' 既存の流出集計（差戻しに関係なく集計）
+                    ' 条件2: 発見={塗装,モール,加工} かつ 発生={成形} → 成形の流出
+                    If (発見 = "塗装" Or 発見 = "モール" Or 発見 = "加工") And 発生 = "成形" Then
+                        成形_流出 = 成形_流出 + 数量
+                    End If
+
+                    ' 条件3: 発見={塗装} かつ 発生={成形} → 塗装発見の流出
+                    If 発見 = "塗装" And 発生 = "成形" Then
+                        塗装発見_流出 = 塗装発見_流出 + 数量
+                    End If
+
+                    ' 条件4: 発見={モール,加工} かつ 発生={塗装} → 塗装の流出
+                    If (発見 = "モール" Or 発見 = "加工") And 発生 = "塗装" Then
+                        塗装_流出 = 塗装_流出 + 数量
+                    End If
+
+                    ' 条件5: 発見={モール,加工} かつ 発生={成形,塗装} → 加工流出総数の流出
+                    If (発見 = "モール" Or 発見 = "加工") And (発生 = "成形" Or 発生 = "塗装") Then
+                        加工流出総数_流出 = 加工流出総数_流出 + 数量
+                    End If
+
+                    ' 新規：差戻しと加工手直しの集計
+                    If 差戻しフラグ = 1 Then
+                        ' 差戻し=1の場合
+                        ' 条件3: 発生={成形} かつ 発見2={モール,加工} → 差戻し_成形
+                        If 発生 = "成形" And (発見 = "モール" Or 発見 = "加工") Then
+                            差戻し_成形 = 差戻し_成形 + 数量
+                        End If
+
+                        ' 条件4: 発生={塗装} かつ 発見2={モール,加工} → 差戻し_塗装
+                        If 発生 = "塗装" And (発見 = "モール" Or 発見 = "加工") Then
+                            差戻し_塗装 = 差戻し_塗装 + 数量
+                        End If
+                    Else
+                        ' 差戻し=0または空白の場合
+                        ' 条件5: 発生={成形} かつ 発見2={モール,加工} → 加工手直し_成形
+                        If 発生 = "成形" And (発見 = "モール" Or 発見 = "加工") Then
+                            加工手直し_成形 = 加工手直し_成形 + 数量
+                        End If
+
+                        ' 条件6: 発生={塗装} かつ 発見2={モール,加工} → 加工手直し_塗装
+                        If 発生 = "塗装" And (発見 = "モール" Or 発見 = "加工") Then
+                            加工手直し_塗装 = 加工手直し_塗装 + 数量
+                        End If
+                    End If
+                End If
+            End If
+        Next i
+    End If
+
+    ' === _廃棄テーブルから廃棄数を集計 ===
+    Application.StatusBar = "廃棄データを集計中..."
+
+    Dim ws廃棄 As Worksheet
+    Set ws廃棄 = ThisWorkbook.Worksheets("廃棄")
+
+    Dim lo廃棄 As ListObject
+    Set lo廃棄 = ws廃棄.ListObjects("_廃棄")
+
+    If Not lo廃棄.DataBodyRange Is Nothing Then
+        Dim arr廃棄 As Variant
+        arr廃棄 = lo廃棄.DataBodyRange.Value
+
+        ' 列インデックス取得
+        Dim col廃_日付 As Long, col廃_工程 As Long, col廃_件数 As Long
+        col廃_日付 = lo廃棄.ListColumns("日付").Index
+        col廃_工程 = lo廃棄.ListColumns("工程").Index
+        col廃_件数 = lo廃棄.ListColumns("件数").Index
+
+        For i = 1 To UBound(arr廃棄, 1)
+            ' 日付チェック
+            If IsDate(arr廃棄(i, col廃_日付)) Then
+                日付 = arr廃棄(i, col廃_日付)
+
+                If 日付 >= 開始日 And 日付 <= 終了日 Then
+                    Dim 工程 As String, 件数 As Long
+                    工程 = Trim(arr廃棄(i, col廃_工程) & "")
+                    件数 = 0
+                    If IsNumeric(arr廃棄(i, col廃_件数)) Then
+                        件数 = CLng(arr廃棄(i, col廃_件数))
+                    End If
+
+                    ' 条件6: 工程={成形} → 成形の廃棄
+                    If 工程 = "成形" Then
+                        成形_廃棄 = 成形_廃棄 + 件数
+                    End If
+
+                    ' 条件7: 工程={塗装} → 塗装の廃棄
+                    If 工程 = "塗装" Then
+                        塗装_廃棄 = 塗装_廃棄 + 件数
+                    End If
+
+                    ' 条件8: 工程={成形,塗装} → 加工流出総数の廃棄
+                    If 工程 = "成形" Or 工程 = "塗装" Then
+                        加工流出総数_廃棄 = 加工流出総数_廃棄 + 件数
+                    End If
+                End If
+            End If
+        Next i
+    End If
+
+    ' === 出力テーブルに転記 ===
+    Application.StatusBar = "結果を転記中..."
+
+    Dim lo出力 As ListObject
+    Set lo出力 = ws期間.ListObjects("_入力")
+
+    If Not lo出力.DataBodyRange Is Nothing Then
+        ' 列インデックス取得
+        Dim col出_工程 As Long, col出_流出 As Long, col出_廃棄 As Long, col出_成形 As Long, col出_塗装 As Long
+        col出_工程 = lo出力.ListColumns("工程").Index
+        col出_流出 = lo出力.ListColumns("流出").Index
+        col出_廃棄 = lo出力.ListColumns("廃棄").Index
+        col出_成形 = lo出力.ListColumns("成形").Index
+        col出_塗装 = lo出力.ListColumns("塗装").Index
+
+        ' 行数取得
+        Dim 行数 As Long
+        行数 = lo出力.DataBodyRange.Rows.Count
+
+        ' 列別の配列を作成
+        ReDim arr流出(1 To 行数, 1 To 1) As Variant
+        ReDim arr廃棄(1 To 行数, 1 To 1) As Variant
+        ReDim arr成形(1 To 行数, 1 To 1) As Variant
+        ReDim arr塗装(1 To 行数, 1 To 1) As Variant
+
+        ' 工程列を読み取り
+        Dim arr工程 As Variant
+        arr工程 = lo出力.ListColumns("工程").DataBodyRange.Value
+
+        ' 工程別に該当行を探して配列に格納
+        For i = 1 To 行数
+            Dim 工程名 As String
+            工程名 = Trim(arr工程(i, 1) & "")
+
+            Select Case 工程名
+                Case "成形"
+                    arr流出(i, 1) = 成形_流出
+                    arr廃棄(i, 1) = 成形_廃棄
+                    arr成形(i, 1) = ""
+                    arr塗装(i, 1) = ""
+
+                Case "塗装発見"
+                    arr流出(i, 1) = 塗装発見_流出
+                    arr廃棄(i, 1) = ""
+                    arr成形(i, 1) = ""
+                    arr塗装(i, 1) = ""
+
+                Case "塗装"
+                    arr流出(i, 1) = 塗装_流出
+                    arr廃棄(i, 1) = 塗装_廃棄
+                    arr成形(i, 1) = ""
+                    arr塗装(i, 1) = ""
+
+                Case "加工流出総数"
+                    arr流出(i, 1) = 加工流出総数_流出
+                    arr廃棄(i, 1) = 加工流出総数_廃棄
+                    arr成形(i, 1) = ""
+                    arr塗装(i, 1) = ""
+
+                Case "廃棄"
+                    arr流出(i, 1) = ""
+                    arr廃棄(i, 1) = ""
+                    arr成形(i, 1) = 成形_廃棄
+                    arr塗装(i, 1) = 塗装_廃棄
+
+                Case "差戻し"
+                    arr流出(i, 1) = ""
+                    arr廃棄(i, 1) = ""
+                    arr成形(i, 1) = 差戻し_成形
+                    arr塗装(i, 1) = 差戻し_塗装
+
+                Case "加工手直し"
+                    arr流出(i, 1) = ""
+                    arr廃棄(i, 1) = ""
+                    arr成形(i, 1) = 加工手直し_成形
+                    arr塗装(i, 1) = 加工手直し_塗装
+
+                Case Else
+                    arr流出(i, 1) = ""
+                    arr廃棄(i, 1) = ""
+                    arr成形(i, 1) = ""
+                    arr塗装(i, 1) = ""
+            End Select
+        Next i
+
+        ' 列単位で書き込み（関数消失問題を防ぐ）
+        lo出力.ListColumns("流出").DataBodyRange.Value = arr流出
+        lo出力.ListColumns("廃棄").DataBodyRange.Value = arr廃棄
+        lo出力.ListColumns("成形").DataBodyRange.Value = arr成形
+        lo出力.ListColumns("塗装").DataBodyRange.Value = arr塗装
+    End If
+
+    Application.StatusBar = False
+    Application.ScreenUpdating = True
+    Exit Sub
+
+ErrorHandler:
+    Application.StatusBar = False
+    Application.ScreenUpdating = True
+    MsgBox "エラーが発生しました: " & Err.Description & vbCrLf & _
+           "エラー番号: " & Err.Number, vbCritical
+End Sub
