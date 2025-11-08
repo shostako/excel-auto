@@ -71,6 +71,26 @@
 ## Claude Code公式リファレンス
 **重要**: Claude Codeの動作に不安がある場合は `docs/claude-code-references/OFFICIAL_TUTORIALS.md` を参照すること
 
+### サブエージェント機能活用方針
+
+**検証済み**: 2025-11-07にGemini提供情報をファクトチェック完了（`docs/claude-code-references/SUBAGENT_VERIFICATION_REPORT.md`）
+
+#### 基本方針
+- **大規模調査**: Exploreサブエージェントに委任（10.8倍の効率化）
+- **独立タスク**: 並列実行で処理（1.8倍の効率化）
+- **簡単な調査**: 直接実行（速度優先）
+
+#### 使用推奨場面
+- 参考マクロの分析: Explore (medium)
+- 複数マクロの最適化確認: Explore (quick)
+- 新機能の実装計画: Plan (sonnet)
+- ドキュメント全体の見直し: 4x Explore並列
+
+#### 詳細ガイド
+- **ベストプラクティス**: `docs/claude-code-references/SUBAGENT_BEST_PRACTICES.md`
+- **検証レポート**: `docs/claude-code-references/SUBAGENT_VERIFICATION_REPORT.md`
+- **クイックリファレンス**: `docs/claude-code-references/README.md`
+
 ## ユーザーコマンド
 
 ### トークン確認コマンド
