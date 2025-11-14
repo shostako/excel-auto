@@ -51,7 +51,7 @@ excel-auto/
 │   │   └── techniques/      # 基本テクニック
 │   └── logs/                # 開発ログ
 ├── templates/                 # テンプレート集
-├── 参考マクロ/               # 実際のマクロサンプル
+├── inbox/                     # 参考マクロ受け取り場所
 └── converted/                # 変換済みファイル
 ```
 

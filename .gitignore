@@ -7,8 +7,8 @@
 converted/
 macros/
 
-# 参考マクロ（一時的な作業ファイル）
-参考マクロ/
+# inbox（一時的な作業ファイル）
+inbox/
 
 # 監視スクリプトのPIDファイル
 .watch_pid

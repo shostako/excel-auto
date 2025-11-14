@@ -31,7 +31,7 @@ M言語生成:
 #### 参考マクロの読み込み（超重要！）
 ```bash
 # 読む前に必ず実行
-iconv -f SHIFT-JIS -t UTF-8 "参考マクロ/ファイル名.bas" | head -100
+iconv -f SHIFT-JIS -t UTF-8 "inbox/ファイル名.bas" | head -100
 ```
 
 **理由**: 
@@ -468,14 +468,14 @@ End Sub
 ### 9.1 読み込み時の必須手順
 ```bash
 # 参考マクロファイル読み込み前に必ず実行
-iconv -f SHIFT-JIS -t UTF-8 "参考マクロ/ファイル名.bas" | head -100
+iconv -f SHIFT-JIS -t UTF-8 "inbox/ファイル名.bas" | head -100
 
 # 文字化け確認用
-file "参考マクロ/ファイル名.bas"
+file "inbox/ファイル名.bas"
 ```
 
 ### 9.2 エンコーディング管理
-- **参考マクロ**: Shift-JIS（Excelエクスポート）
+- **inbox**: Shift-JIS（Excelエクスポート）
 - **src/**: UTF-8（Claude編集用）
 - **macros/**: Shift-JIS（Excel取り込み用）
 

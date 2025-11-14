@@ -29,7 +29,7 @@ Application.ScreenUpdating = False
 #### 2. 文字化け対策（列名誤認識事故防止）
 ```bash
 # 参考マクロを読む前に必ず実行
-iconv -f SHIFT-JIS -t UTF-8 "参考マクロ/ファイル名.bas" | head -100
+iconv -f SHIFT-JIS -t UTF-8 "inbox/ファイル名.bas" | head -100
 ```
 
 #### 3. 変数管理（タイポ・重複エラー防止）

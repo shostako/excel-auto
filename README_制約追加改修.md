@@ -80,7 +80,7 @@ cd /home/shostako/ClaudeCode/excel-auto
 
 参考マクロを完全に書き換える方法です（上級者向け）。
 
-1. `参考マクロ/m転記_負荷均し.bas` をUTF-8に変換
+1. `inbox/m転記_負荷均し.bas` をUTF-8に変換
 2. 改修方針ドキュメントに従って全箇所を改修
 3. `src/` に保存してbas2sjisで変換
 4. Excelにインポート

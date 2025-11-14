@@ -1,6 +1,6 @@
 #!/bin/bash
 # ワークスペースクリーンアップスクリプト
-# セッション終了時にsrc/、macros/、参考マクロ/のファイルを削除してコミット
+# セッション終了時にsrc/、macros/、inbox/のファイルを削除してコミット
 
 set -e
 
@@ -35,10 +35,10 @@ if ls macros/*.bas 2>/dev/null | grep -q .; then
     found=1
 fi
 
-if ls 参考マクロ/*.bas 2>/dev/null | grep -q .; then
+if ls inbox/*.bas 2>/dev/null | grep -q .; then
     echo
-    echo "参考マクロ/:"
-    ls -1 参考マクロ/*.bas 2>/dev/null | sed 's|参考マクロ/|  - |'
+    echo "inbox/:"
+    ls -1 inbox/*.bas 2>/dev/null | sed 's|inbox/|  - |'
     found=1
 fi
 
@@ -64,7 +64,7 @@ echo
 
 if [ "$confirm" = "y" ] || [ "$confirm" = "Y" ]; then
     # ファイル削除
-    rm -f src/*.bas macros/*.bas 参考マクロ/*.bas 2>/dev/null || true
+    rm -f src/*.bas macros/*.bas inbox/*.bas 2>/dev/null || true
 
     # Git操作
     git add -A
@@ -88,5 +88,5 @@ echo "=========================================="
 echo "ワークスペース状態："
 echo "  src/      : $(ls src/*.bas 2>/dev/null | wc -l) ファイル"
 echo "  macros/   : $(ls macros/*.bas 2>/dev/null | wc -l) ファイル"
-echo "  参考マクロ/: $(ls 参考マクロ/*.bas 2>/dev/null | wc -l) ファイル"
+echo "  inbox/    : $(ls inbox/*.bas 2>/dev/null | wc -l) ファイル"
 echo "=========================================="

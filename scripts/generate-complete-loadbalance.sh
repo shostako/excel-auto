@@ -3,7 +3,7 @@
 
 set -e
 
-SOURCE_FILE="参考マクロ/m転記_負荷均し.bas"
+SOURCE_FILE="inbox/m転記_負荷均し.bas"
 OUTPUT_FILE="src/m転記_負荷均し_制約版.bas"
 TEMP_FILE="/tmp/m転記_負荷均し_temp.bas"
 

@@ -237,11 +237,11 @@ End Sub
 ## 重要な制約事項
 
 ### 参考マクロの読み込み（超重要！）
-**必須事項**: 参考マクロフォルダのファイルは**必ず文字コード変換してから読むこと**
+**必須事項**: inboxフォルダの参考マクロファイルは**必ず文字コード変換してから読むこと**
 
 ```bash
 # 読む前に必ず実行
-iconv -f SHIFT-JIS -t UTF-8 "参考マクロ/ファイル名.bas" | head -100
+iconv -f SHIFT-JIS -t UTF-8 "inbox/ファイル名.bas" | head -100
 ```
 
 **理由**:
@@ -309,24 +309,7 @@ iconv -f SHIFT-JIS -t UTF-8 "参考マクロ/ファイル名.bas" | head -100
 - **GitHub Actions使用停止**: Excelマクロ開発には複雑すぎるため
 - **直接開発重視**: コード品質向上を最優先
 - **文字エンコーディング管理**: UTF-8 ↔ Shift-JIS変換の確実な実行
-- **自動クリーンアップ**: コミット後に自動でワークスペースをクリーン化
-
-### 自動クリーンアップ（Git Hook）
-
-**仕組み**：
-- コミット成功時に `.git/hooks/post-commit` が自動実行
-- `scripts/cleanup-workspace.sh --auto` を呼び出し
-- `src/*.bas`, `macros/*.bas`, `参考マクロ/*.bas` を自動削除・コミット
-
-**ユーザー操作**：
-- 通常通り `git add` → `git commit` するだけ
-- 自動でクリーンアップとコミットが実行される
-- 確認プロンプトなし（`--auto`モード）
-
-**手動実行**（必要な場合のみ）：
-```bash
-./scripts/cleanup-workspace.sh  # 確認プロンプトあり
-```
+- **手動クリーンアップ**: セッション終了時にMakefileで実行
 
 ### bas2sjisスクリプト
 
@@ -354,14 +337,14 @@ ls -la macros/
 #### 読み込み時の注意
 ```bash
 # 参考マクロファイル読み込み前に必ず実行
-iconv -f SHIFT-JIS -t UTF-8 "参考マクロ/ファイル名.bas" | head -100
+iconv -f SHIFT-JIS -t UTF-8 "inbox/ファイル名.bas" | head -100
 
 # 文字化け確認用
-file "参考マクロ/ファイル名.bas"
+file "inbox/ファイル名.bas"
 ```
 
 #### エンコーディング確認
-- **参考マクロ**: Shift-JIS（Excelエクスポート）
+- **inbox**: Shift-JIS（Excelエクスポート）
 - **src/**: UTF-8（Claude編集用）
 - **macros/**: Shift-JIS（Excel取り込み用）
 
@@ -382,24 +365,21 @@ file "参考マクロ/ファイル名.bas"
 
 #### ワークスペースクリーンアップ
 
-**自動実行**（推奨）:
-- コミット後に自動で実行される（`.git/hooks/post-commit`）
-- 手動操作不要
-
-**手動実行**（必要な場合のみ）:
+**実行方法**:
 ```bash
-./scripts/cleanup-workspace.sh  # 確認プロンプトあり
+make clean  # または自然言語で「クリーンアップして」「クリーン」
 ```
 
 **動作**:
-1. `src/*.bas`、`macros/*.bas`、`参考マクロ/*.bas`を表示
-2. 削除確認（自動モードではスキップ）
+1. `src/*.bas`、`macros/*.bas`、`inbox/*.bas`を表示
+2. 削除確認プロンプト
 3. 削除実行
 4. Git add → commit（"clean: ワークスペースクリーンアップ - セッション終了"）
 
 **Monday（Claude）の責務**:
-- コミット時に自動クリーンアップが実行されることを把握
-- 手動クリーンアップが必要な場合のみユーザーに提案
+- セッション終了時にクリーンアップを提案
+- ユーザーの「クリーン」「片付けて」等の指示で`make clean`実行
+- Makefileの存在を認識し、自然言語指示を適切に変換
 
 ### トラブルシューティング
 
