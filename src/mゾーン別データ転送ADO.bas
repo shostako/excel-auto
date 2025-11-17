@@ -277,8 +277,10 @@ Sub ゾーン別データ転送ADO()
     
         ' キー値を作成して重複チェック
         key = CreateKeyFromRow(tbl, i, keyFields, fieldIndices)
-        
-        If Not existingDict.Exists(key) Then
+
+        ' 重複チェック（下記の2行のどちらかをコメントアウトして切り替え）
+        If Not existingDict.Exists(key) Then     ' ← 重複チェック有効（デフォルト）
+        'If True Then                             ' ← 重複チェック無効化（上をコメントアウトしてこちらを有効化）
             ' この行のINSERT SQL文を作成（指定フィールドのみ）
             Dim sqlInsert As String
             sqlInsert = "INSERT INTO [_不良集計ゾーン別] (" & fieldList & ") VALUES (" & _
@@ -289,10 +291,12 @@ Sub ゾーン別データ転送ADO()
             
             ' 成功カウント増加
             successCount = successCount + 1
-            
-            ' Dictionaryに追加
+
+            ' Dictionaryに追加（重複チェック無効時のエラーを回避）
+            On Error Resume Next
             existingDict.Add key, True
-            
+            On Error GoTo ErrorHandler
+
             ' バッチカウンターを増加
             batchCounter = batchCounter + 1
             
