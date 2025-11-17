@@ -3,12 +3,14 @@
 *.tmp
 ~$*
 
-# 変換済みファイル（元のソースはsrc/に保管）
+# 変換済みファイル（フォルダは維持、中身は除外）
 converted/
-macros/
+macros/*
+!macros/.gitkeep
 
-# inbox（一時的な作業ファイル）
-inbox/
+# inbox（フォルダは維持、中身は除外）
+inbox/*
+!inbox/.gitkeep
 
 # 監視スクリプトのPIDファイル
 .watch_pid
