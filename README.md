@@ -50,9 +50,7 @@ excel-auto/
 │   │   ├── patterns/        # 最適化パターン
 │   │   ├── techniques/      # 基本テクニック
 │   │   └── claude-code/     # 実戦的マクロ開発ナレッジ
-│   ├── claude-code-references/ # Claude Code公式リファレンス
-│   ├── 負荷均しマクロ改修ガイド.md # 負荷均しマクロ改修の最終ガイド
-│   └── 改修方針_負荷均しマクロ.md  # 詳細改修手順
+│   └── claude-code-references/ # Claude Code公式リファレンス
 ├── logs/                      # 作業ログ（月別）
 └── templates/                 # テンプレート集
     └── vba/                  # VBAテンプレート

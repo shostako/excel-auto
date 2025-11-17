@@ -69,7 +69,6 @@
 - 必ず日本語で応答
 
 ## Claude Code公式リファレンス
-**重要**: Claude Codeの動作に不安がある場合は `docs/claude-code-references/OFFICIAL_TUTORIALS.md` を参照すること
 
 ### サブエージェント機能活用方針
 
