@@ -39,20 +39,40 @@ AI駆動Excel自動化ツール - 自然言語でExcel操作を説明すると�
 ```
 excel-auto/
 ├── README.md                   # このファイル
-├── CLAUDE.md                  # AI向けガイドライン
-├── src/                       # 生成されたソースコード
-│   ├── vba/                  # VBAマクロ
-│   ├── python/               # Pythonスクリプト
-│   └── javascript/           # Office Scripts
+├── CLAUDE.md                  # AI向けガイドライン・Monday設定
+├── src/                       # 開発中VBAマクロ（UTF-8）
+├── macros/                    # 変換済みVBAマクロ（Shift-JIS、Excelインポート用）
+├── inbox/                     # 参考マクロ受け取り（Shift-JIS、要文字コード変換）
+├── scripts/                   # 変換スクリプト（bas2sjis等）
 ├── docs/                      # ドキュメント
 │   ├── excel-knowledge/      # 知識ベース
 │   │   ├── failures/        # 失敗事例・対策
 │   │   ├── patterns/        # 最適化パターン
-│   │   └── techniques/      # 基本テクニック
-│   └── logs/                # 開発ログ
-├── templates/                 # テンプレート集
-├── inbox/                     # 参考マクロ受け取り場所
-└── converted/                # 変換済みファイル
+│   │   ├── techniques/      # 基本テクニック
+│   │   └── claude-code/     # 実戦的マクロ開発ナレッジ
+│   ├── claude-code-references/ # Claude Code公式リファレンス
+│   ├── 負荷均しマクロ改修ガイド.md # 負荷均しマクロ改修の最終ガイド
+│   └── 改修方針_負荷均しマクロ.md  # 詳細改修手順
+├── logs/                      # 作業ログ（月別）
+└── templates/                 # テンプレート集
+    └── vba/                  # VBAテンプレート
+```
+
+### 📁 重要ディレクトリ
+
+#### src/
+開発中のVBAマクロ（UTF-8エンコーディング）。Claude Code編集用。
+
+#### macros/
+Shift-JIS変換済みVBAマクロ。Excelへのインポート用。
+`bas2sjis`スクリプトで自動生成される。
+
+#### inbox/
+参考マクロファイルの受け取り場所。
+**重要**: Excelエクスポート形式（Shift-JIS）のため、読み込み前に必ずUTF-8変換が必要。
+
+```bash
+iconv -f SHIFT-JIS -t UTF-8 "inbox/ファイル名.bas" | head -100
 ```
 
 ## 🛠 セットアップ
