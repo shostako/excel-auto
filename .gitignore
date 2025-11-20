@@ -38,6 +38,7 @@ test/output/
 .env
 .mcp.json
 .mcp/
+.claude/
 
 # 空ディレクトリ
 ready/
