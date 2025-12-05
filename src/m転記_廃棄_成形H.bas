@@ -1,51 +1,44 @@
-Attribute VB_Name = "m転記_流出_成形G"
+Attribute VB_Name = "m転記_廃棄_成形H"
 Option Explicit
 
 ' ========================================
-' マクロ名: 転記_流出_成形G
-' 処理概要: 手直しと廃棄データを統合し期間別に9分類で集計して成形Gシートに転記
+' マクロ名: 転記_廃棄_成形H
+' 処理概要: 廃棄データを期間別に9分類で集計して成形Hシートに転記（合計列付き）
 '
 ' 【処理の特徴】
 ' 1. 空白期間スキップ：集計期間テーブルに行があっても、該当期間内にデータがなければテーブルを作らない
 ' 2. 動的期間対応：集計期間テーブルの行数が変わっても自動的に対応（増減どちらもOK）
 ' 3. 高速化：配列処理による大量データの高速集計
 ' 4. ワースト順機能：項目テーブルの「ワースト」設定に応じて動的に出力順序を変更
-' 5. 2ソース統合：手直しと廃棄のデータを項目名単位で合算
-' 6. 合計列出力：9品番データ列の右に合計列を追加
+' 5. 合計列追加：9品番の右に合計列を追加して各行の合計値を自動計算
 '
 ' 【テーブル構成】
-' 期間テーブル : シート「成形G」、テーブル「_集計期間成形G」
-' 項目テーブル : シート「成形G」、テーブル「_流出項目成形G」
-' ソーステーブル : シート「手直し」、テーブル「_手直し」
-'                  シート「廃棄」、テーブル「_廃棄」
-'                  シート「ロット数量」、テーブル「_ロット数量」
-' 出力テーブル : シート「成形G」、複数テーブル「_流出G_成形_{期間名}」
+' 期間テーブル : シート「成形H」、テーブル「_廃棄項目成形H」
+' ソーステーブル : シート「廃棄」、テーブル「_廃棄」；シート「ロット数量」、テーブル「_ロット数量」
+' 項目テーブル : シート「成形H」、テーブル「_集計期間成形H」
+' 出力テーブル : シート「成形H」、複数テーブル「_廃棄H_成形_{期間名}」
 '
 ' 【処理フロー】
 ' 1. 既存出力テーブルとデータを完全削除
 ' 2. ワースト設定（全項目 or 数値N）を読み込み
-' 3. 各期間ごとに：
-'    a) ロット数量からショット数集計（工程=加工）
-'    b) 手直しテーブルから不良数と項目別集計（発生=成形 AND 発見2≠成形）
-'    c) 廃棄テーブルから不良数と項目別集計（工程=成形）
-'    d) 手直しと廃棄の同一項目名を合算
-'    e) 全グループ合計で降順ソート
-' 4. データがある期間のみテーブル出力（空白期間はスキップ）
+' 3. 各期間ごとに日付フィルター + 品番による9分類集計
+' 4. 集計結果を降順ソートしてワースト順出力
+' 5. データがある期間のみテーブル出力（空白期間はスキップ）
+' 6. 各行に9品番の合計列を追加
 '
 ' 【出力形式】
 ' - 1行目：ショット数（「_ロット数量」テーブルで工程=加工、品番2で9分類照合）+ 合計
-' - 2行目：不良数（手直しの数量 + 廃棄の件数）+ 合計
-' - 3行目以降：ワースト順で項目別集計（手直しのモード2 + 廃棄の不良内容を統合）+ 合計
+' - 2行目：不良数（「_廃棄」テーブルの「件数」列を品番2で集計）+ 合計
+' - 3行目以降：ワースト順で項目別集計 + 合計
 '   - 「全項目」設定：0でない項目を降順で全て出力
 '   - 数値N設定：上位N件 + 「その他」行（N+1行、ただし0でない項目数<=Nなら「その他」なし）
 '
 ' 【集計条件】
-' - 手直し：発生=成形 AND 発見2≠成形、品番3（8分類→9分類にマッピング）
-' - 廃棄：工程=成形、品番2（9分類）
+' - 「_廃棄」テーブル：工程=成形
 ' - 品番照合：完全一致
 ' ========================================
 
-Sub 転記_流出_成形G()
+Sub 転記_廃棄_成形H()
     ' ============================================
     ' 最適化設定の保存と適用
     ' ============================================
@@ -65,34 +58,26 @@ Sub 転記_流出_成形G()
     Application.DisplayAlerts = False
 
     On Error GoTo ErrorHandler
-    Application.StatusBar = "流出成形G転記処理を開始します..."
+    Application.StatusBar = "廃棄成形H転記処理を開始します..."
 
     ' ============================================
     ' シートとテーブルの参照取得
     ' ============================================
-    Dim wsHandaosi As Worksheet, wsHaiki As Worksheet, wsLot As Worksheet, wsTarget As Worksheet
-    Set wsHandaosi = ThisWorkbook.Worksheets("手直し")
-    Set wsHaiki = ThisWorkbook.Worksheets("廃棄")
+    Dim wsSource As Worksheet, wsLot As Worksheet, wsTarget As Worksheet
+    Set wsSource = ThisWorkbook.Worksheets("廃棄")
     Set wsLot = ThisWorkbook.Worksheets("ロット数量")
-    Set wsTarget = ThisWorkbook.Worksheets("成形G")
+    Set wsTarget = ThisWorkbook.Worksheets("成形H")
 
-    Dim tblHandaosi As ListObject, tblHaiki As ListObject, tblLot As ListObject
-    Dim tblItems As ListObject, tblPeriod As ListObject
+    Dim tblSource As ListObject, tblLot As ListObject, tblItems As ListObject, tblPeriod As ListObject
     On Error Resume Next
-    Set tblHandaosi = wsHandaosi.ListObjects("_手直し")
-    Set tblHaiki = wsHaiki.ListObjects("_廃棄")
+    Set tblSource = wsSource.ListObjects("_廃棄")
     Set tblLot = wsLot.ListObjects("_ロット数量")
-    Set tblItems = wsTarget.ListObjects("_流出項目成形G")
-    Set tblPeriod = wsTarget.ListObjects("_集計期間成形G")
+    Set tblItems = wsTarget.ListObjects("_廃棄項目成形H")
+    Set tblPeriod = wsTarget.ListObjects("_集計期間成形H")
     On Error GoTo ErrorHandler
 
     ' 必須テーブルチェック
-    If tblHandaosi Is Nothing Then
-        MsgBox "シート「手直し」にテーブル「_手直し」が見つかりません。", vbCritical
-        GoTo Cleanup
-    End If
-
-    If tblHaiki Is Nothing Then
+    If tblSource Is Nothing Then
         MsgBox "シート「廃棄」にテーブル「_廃棄」が見つかりません。", vbCritical
         GoTo Cleanup
     End If
@@ -168,46 +153,27 @@ Sub 転記_流出_成形G()
     End If
 
     If periodCount = 0 Then
-        MsgBox "「_集計期間成形G」に有効な集計期間がありません。処理を中止します。", vbExclamation
+        MsgBox "「_集計期間成形H」に有効な集計期間がありません。処理を中止します。", vbExclamation
         GoTo Cleanup
     End If
 
     ' ============================================
-    ' 手直しテーブルのデータ範囲取得と列インデックス
+    ' ソーステーブルのデータ範囲取得と列インデックス
     ' ============================================
-    Dim handaosiData As Range
-    Set handaosiData = tblHandaosi.DataBodyRange
-    If handaosiData Is Nothing Then
-        MsgBox "手直しテーブルにデータがありません", vbCritical
+    Dim srcData As Range
+    Set srcData = tblSource.DataBodyRange
+    If srcData Is Nothing Then
+        Application.StatusBar = "ソーステーブルにデータがありません"
         GoTo Cleanup
     End If
 
-    Dim colHandaosiHizuke As Long, colHinban3 As Long, colHassei As Long, colHakken2 As Long
-    Dim colMode2 As Long, colSuuryou As Long
-    colHandaosiHizuke = tblHandaosi.ListColumns("日付").Index
-    colHinban3 = tblHandaosi.ListColumns("品番3").Index
-    colHassei = tblHandaosi.ListColumns("発生").Index
-    colHakken2 = tblHandaosi.ListColumns("発見2").Index
-    colMode2 = tblHandaosi.ListColumns("モード2").Index
-    colSuuryou = tblHandaosi.ListColumns("数量").Index
-
-    ' ============================================
-    ' 廃棄テーブルのデータ範囲取得と列インデックス
-    ' ============================================
-    Dim haikiData As Range
-    Set haikiData = tblHaiki.DataBodyRange
-    If haikiData Is Nothing Then
-        MsgBox "廃棄テーブルにデータがありません", vbCritical
-        GoTo Cleanup
-    End If
-
-    Dim colHaikiHizuke As Long, colHinban2Haiki As Long, colKoutei As Long
+    Dim colHizuke As Long, colHinban2 As Long, colKoutei As Long
     Dim colFuryouNaiyou As Long, colKensuu As Long
-    colHaikiHizuke = tblHaiki.ListColumns("日付").Index
-    colHinban2Haiki = tblHaiki.ListColumns("品番2").Index
-    colKoutei = tblHaiki.ListColumns("工程").Index
-    colFuryouNaiyou = tblHaiki.ListColumns("不良内容").Index
-    colKensuu = tblHaiki.ListColumns("件数").Index
+    colHizuke = tblSource.ListColumns("日付").Index
+    colHinban2 = tblSource.ListColumns("品番2").Index
+    colKoutei = tblSource.ListColumns("工程").Index
+    colFuryouNaiyou = tblSource.ListColumns("不良内容").Index
+    colKensuu = tblSource.ListColumns("件数").Index
 
     ' ============================================
     ' ロット数量テーブルのデータ範囲取得と列インデックス
@@ -245,7 +211,7 @@ Sub 転記_流出_成形G()
     For idxLO = wsTarget.ListObjects.Count To 1 Step -1
         Dim loTemp As ListObject
         Set loTemp = wsTarget.ListObjects(idxLO)
-        If loTemp.Name Like "_流出G_成形_*" Then
+        If loTemp.Name Like "_廃棄H_成形_*" Then
             loTemp.Delete
         End If
     Next idxLO
@@ -294,11 +260,8 @@ Sub 転記_流出_成形G()
     ' ============================================
     ' ソースデータを配列に取り込み
     ' ============================================
-    Dim handaosiArr As Variant
-    handaosiArr = handaosiData.Value
-
-    Dim haikiArr As Variant
-    haikiArr = haikiData.Value
+    Dim srcArr As Variant
+    srcArr = srcData.Value
 
     Dim lotArr As Variant
     If Not lotData Is Nothing Then
@@ -381,86 +344,29 @@ Sub 転記_流出_成形G()
         hasData = False
 
         ' ============================================
-        ' 手直しテーブルから不良数と項目別集計
-        ' ============================================
-        For r = 1 To UBound(handaosiArr, 1)
-            Dim handaosiDate As Variant
-            handaosiDate = handaosiArr(r, colHandaosiHizuke)
-
-            If IsDate(handaosiDate) Then
-                Dim handaosiDt As Date
-                handaosiDt = CDate(handaosiDate)
-
-                If handaosiDt >= startDate And handaosiDt <= endDate Then
-                    ' 条件チェック：発生=成形、発見2≠成形
-                    Dim hassei As String, hakken2 As String
-                    hassei = Trim(CStr(handaosiArr(r, colHassei)))
-                    hakken2 = Trim(CStr(handaosiArr(r, colHakken2)))
-
-                    If hassei = "成形" And hakken2 <> "成形" Then
-                        Dim hinban3 As String
-                        hinban3 = Trim(CStr(handaosiArr(r, colHinban3)))
-
-                        ' 手直しは8分類なので補給品は存在しない
-                        If hinbanList.Exists(hinban3) And hinban3 <> "補給品" Then
-                            Dim suuryou As Double
-                            If IsNumeric(handaosiArr(r, colSuuryou)) Then
-                                suuryou = CDbl(handaosiArr(r, colSuuryou))
-
-                                ' データありフラグ
-                                If suuryou <> 0 Then
-                                    hasData = True
-                                End If
-
-                                ' 不良数に加算
-                                aggFuryo(hinban3) = aggFuryo(hinban3) + suuryou
-
-                                ' モード2による項目別集計
-                                Dim mode2 As String
-                                mode2 = Trim(CStr(handaosiArr(r, colMode2)))
-
-                                ' 空欄の場合は「（空白）」として集計
-                                If Len(mode2) = 0 Then mode2 = "（空白）"
-                                If Not aggItems(hinban3).Exists(mode2) Then
-                                    aggItems(hinban3)(mode2) = 0
-                                End If
-                                aggItems(hinban3)(mode2) = aggItems(hinban3)(mode2) + suuryou
-                            End If
-                        End If
-                    End If
-                End If
-            End If
-
-            ' 進捗表示（200行ごと）
-            If (r Mod 200) = 0 Then
-                Application.StatusBar = "期間 " & periodIdx & "/" & periodCount & " - 手直し " & r & "/" & UBound(handaosiArr, 1) & " 行処理中..."
-            End If
-        Next r
-
-        ' ============================================
         ' 廃棄テーブルから不良数と項目別集計
         ' ============================================
-        For r = 1 To UBound(haikiArr, 1)
-            Dim haikiDate As Variant
-            haikiDate = haikiArr(r, colHaikiHizuke)
+        For r = 1 To UBound(srcArr, 1)
+            Dim srcDate As Variant
+            srcDate = srcArr(r, colHizuke)
 
-            If IsDate(haikiDate) Then
-                Dim haikiDt As Date
-                haikiDt = CDate(haikiDate)
+            If IsDate(srcDate) Then
+                Dim srcDt As Date
+                srcDt = CDate(srcDate)
 
-                If haikiDt >= startDate And haikiDt <= endDate Then
+                If srcDt >= startDate And srcDt <= endDate Then
                     ' 条件チェック：工程=成形
                     Dim koutei As String
-                    koutei = Trim(CStr(haikiArr(r, colKoutei)))
+                    koutei = Trim(CStr(srcArr(r, colKoutei)))
 
                     If koutei = "成形" Then
-                        Dim hinban2Haiki As String
-                        hinban2Haiki = Trim(CStr(haikiArr(r, colHinban2Haiki)))
+                        Dim hinban2 As String
+                        hinban2 = Trim(CStr(srcArr(r, colHinban2)))
 
-                        If hinbanList.Exists(hinban2Haiki) Then
+                        If hinbanList.Exists(hinban2) Then
                             Dim kensuu As Double
-                            If IsNumeric(haikiArr(r, colKensuu)) Then
-                                kensuu = CDbl(haikiArr(r, colKensuu))
+                            If IsNumeric(srcArr(r, colKensuu)) Then
+                                kensuu = CDbl(srcArr(r, colKensuu))
 
                                 ' データありフラグ
                                 If kensuu <> 0 Then
@@ -468,18 +374,19 @@ Sub 転記_流出_成形G()
                                 End If
 
                                 ' 不良数に加算
-                                aggFuryo(hinban2Haiki) = aggFuryo(hinban2Haiki) + kensuu
+                                aggFuryo(hinban2) = aggFuryo(hinban2) + kensuu
 
                                 ' 不良内容による項目別集計
                                 Dim furyouNaiyou As String
-                                furyouNaiyou = Trim(CStr(haikiArr(r, colFuryouNaiyou)))
+                                furyouNaiyou = Trim(CStr(srcArr(r, colFuryouNaiyou)))
 
                                 ' 空欄の場合は「（空白）」として集計
                                 If Len(furyouNaiyou) = 0 Then furyouNaiyou = "（空白）"
-                                If Not aggItems(hinban2Haiki).Exists(furyouNaiyou) Then
-                                    aggItems(hinban2Haiki)(furyouNaiyou) = 0
+                                If Not aggItems(hinban2).Exists(furyouNaiyou) Then
+                                        aggItems(hinban2)(furyouNaiyou) = 0
+                                    End If
+                                    aggItems(hinban2)(furyouNaiyou) = aggItems(hinban2)(furyouNaiyou) + kensuu
                                 End If
-                                aggItems(hinban2Haiki)(furyouNaiyou) = aggItems(hinban2Haiki)(furyouNaiyou) + kensuu
                             End If
                         End If
                     End If
@@ -488,7 +395,7 @@ Sub 転記_流出_成形G()
 
             ' 進捗表示（200行ごと）
             If (r Mod 200) = 0 Then
-                Application.StatusBar = "期間 " & periodIdx & "/" & periodCount & " - 廃棄 " & r & "/" & UBound(haikiArr, 1) & " 行処理中..."
+                Application.StatusBar = "期間 " & periodIdx & "/" & periodCount & " - " & r & "/" & UBound(srcArr, 1) & " 行処理中..."
             End If
         Next r
 
@@ -511,7 +418,7 @@ Sub 転記_流出_成形G()
         ' テーブル出力：タイトル行
         ' ============================================
         Dim titleText As String
-        titleText = "成形_流出手直し（廃棄込）" & Format(startDate, "m/d") & "~" & Format(endDate, "m/d")
+        titleText = "廃棄H_成形_" & periodName & "_" & Format(startDate, "m/d") & "‾" & Format(endDate, "m/d")
 
         With wsTarget.Cells(currentRow, 1)
             .Value = titleText
@@ -539,7 +446,7 @@ Sub 転記_流出_成形G()
             colOffset = colOffset + 1
         Next grp
 
-        ' 合計列ヘッダーを追加
+        ' 合計列のヘッダー追加
         With wsTarget.Cells(outputStartRow, colOffset)
             .Value = "合計"
             .ShrinkToFit = True
@@ -559,17 +466,17 @@ Sub 転記_流出_成形G()
             .ShrinkToFit = True
         End With
         colOffset = 2
-        Dim shotSum As Double
-        shotSum = 0
+        Dim shotTotal As Double
+        shotTotal = 0
         For Each grp In allGroups
             Dim shotVal As Double
             shotVal = aggShot(CStr(grp))
             wsTarget.Cells(rowIdx, colOffset).Value = shotVal
-            shotSum = shotSum + shotVal
+            shotTotal = shotTotal + shotVal
             colOffset = colOffset + 1
         Next grp
-        ' ショット数合計を出力
-        wsTarget.Cells(rowIdx, colOffset).Value = shotSum
+        ' 合計列
+        wsTarget.Cells(rowIdx, colOffset).Value = shotTotal
         rowIdx = rowIdx + 1
 
         ' 2行目：不良数
@@ -578,17 +485,17 @@ Sub 転記_流出_成形G()
             .ShrinkToFit = True
         End With
         colOffset = 2
-        Dim furyoSum As Double
-        furyoSum = 0
+        Dim furyoTotal As Double
+        furyoTotal = 0
         For Each grp In allGroups
             Dim furyoVal As Double
             furyoVal = aggFuryo(CStr(grp))
             wsTarget.Cells(rowIdx, colOffset).Value = furyoVal
-            furyoSum = furyoSum + furyoVal
+            furyoTotal = furyoTotal + furyoVal
             colOffset = colOffset + 1
         Next grp
-        ' 不良数合計を出力
-        wsTarget.Cells(rowIdx, colOffset).Value = furyoSum
+        ' 合計列
+        wsTarget.Cells(rowIdx, colOffset).Value = furyoTotal
         rowIdx = rowIdx + 1
 
         ' ============================================
@@ -703,8 +610,8 @@ Sub 転記_流出_成形G()
                 End With
 
                 colOffset = 2
-                Dim itemRowSum As Double
-                itemRowSum = 0
+                Dim itemRowTotal As Double
+                itemRowTotal = 0
                 For Each grp In allGroups
                     Dim itemValue As Double
                     itemValue = 0
@@ -714,12 +621,12 @@ Sub 転記_流出_成形G()
                     End If
 
                     wsTarget.Cells(rowIdx, colOffset).Value = itemValue
-                    itemRowSum = itemRowSum + itemValue
+                    itemRowTotal = itemRowTotal + itemValue
                     colOffset = colOffset + 1
                 Next grp
 
-                ' 項目行の合計を出力
-                wsTarget.Cells(rowIdx, colOffset).Value = itemRowSum
+                ' 合計列
+                wsTarget.Cells(rowIdx, colOffset).Value = itemRowTotal
 
                 rowIdx = rowIdx + 1
             Next outItem
@@ -734,8 +641,8 @@ Sub 転記_流出_成形G()
                 End With
 
                 colOffset = 2
-                Dim sonotaRowSum As Double
-                sonotaRowSum = 0
+                Dim sonotaRowTotal As Double
+                sonotaRowTotal = 0
                 For Each grp In allGroups
                     Dim sonotaSum As Double
                     sonotaSum = 0
@@ -751,12 +658,12 @@ Sub 転記_流出_成形G()
                     Next k
 
                     wsTarget.Cells(rowIdx, colOffset).Value = sonotaSum
-                    sonotaRowSum = sonotaRowSum + sonotaSum
+                    sonotaRowTotal = sonotaRowTotal + sonotaSum
                     colOffset = colOffset + 1
                 Next grp
 
-                ' 「その他」行の合計を出力
-                wsTarget.Cells(rowIdx, colOffset).Value = sonotaRowSum
+                ' 合計列
+                wsTarget.Cells(rowIdx, colOffset).Value = sonotaRowTotal
 
                 rowIdx = rowIdx + 1
             End If
@@ -766,7 +673,7 @@ Sub 転記_流出_成形G()
         ' テーブル化
         ' ============================================
         Dim lastCol As Long
-        lastCol = UBound(allGroups) + 3  ' 9品番 + 項目列 + 合計列
+        lastCol = UBound(allGroups) + 3  ' 項目列 + 9品番 + 合計列
 
         Dim tableRange As Range
         On Error Resume Next
@@ -775,7 +682,7 @@ Sub 転記_流出_成形G()
 
         If Not tableRange Is Nothing Then
             Dim baseName As String, tryName As String, tryIdx As Long
-            baseName = "_流出G_成形_" & Replace(periodName, " ", "_")
+            baseName = "_廃棄H_成形_" & Replace(periodName, " ", "_")
             tryName = baseName
             tryIdx = 1
             Do While TableExists(wsTarget, tryName)
@@ -814,7 +721,7 @@ NextPeriod:
     ' ============================================
     If printRangeStart > 0 And printRangeEnd > 0 Then
         Dim printLastCol As Long
-        printLastCol = UBound(allGroups) + 3  ' 9品番 + 項目列 + 合計列
+        printLastCol = UBound(allGroups) + 3  ' 項目列 + 9品番 + 合計列
 
         On Error Resume Next
         wsTarget.PageSetup.PrintArea = wsTarget.Range( _
@@ -825,13 +732,7 @@ NextPeriod:
         Application.StatusBar = "印刷範囲を設定しました"
     End If
 
-Cleanup:
-    Application.ScreenUpdating = origScreenUpdating
-    Application.Calculation = origCalculation
-    Application.EnableEvents = origEnableEvents
-    Application.DisplayAlerts = origDisplayAlerts
-    Application.StatusBar = False
-    Exit Sub
+    GoTo Cleanup
 
 ErrorHandler:
     Application.ScreenUpdating = origScreenUpdating
@@ -841,7 +742,15 @@ ErrorHandler:
     Application.StatusBar = False
 
     MsgBox "エラーが発生しました: " & Err.Description & vbCrLf & _
-           "エラー番号: " & Err.Number, vbCritical, "転記_流出_成形G"
+           "エラー番号: " & Err.Number, vbCritical, "転記_廃棄_成形H"
+    Exit Sub
+
+Cleanup:
+    Application.ScreenUpdating = origScreenUpdating
+    Application.Calculation = origCalculation
+    Application.EnableEvents = origEnableEvents
+    Application.DisplayAlerts = origDisplayAlerts
+    Application.StatusBar = False
 End Sub
 
 ' ============================================
