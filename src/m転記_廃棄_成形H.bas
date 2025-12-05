@@ -383,10 +383,9 @@ Sub 転記_廃棄_成形H()
                                 ' 空欄の場合は「（空白）」として集計
                                 If Len(furyouNaiyou) = 0 Then furyouNaiyou = "（空白）"
                                 If Not aggItems(hinban2).Exists(furyouNaiyou) Then
-                                        aggItems(hinban2)(furyouNaiyou) = 0
-                                    End If
-                                    aggItems(hinban2)(furyouNaiyou) = aggItems(hinban2)(furyouNaiyou) + kensuu
+                                    aggItems(hinban2)(furyouNaiyou) = 0
                                 End If
+                                aggItems(hinban2)(furyouNaiyou) = aggItems(hinban2)(furyouNaiyou) + kensuu
                             End If
                         End If
                     End If

@@ -284,10 +284,9 @@ Sub 転記_廃棄_塗装H()
                                 ' 空欄の場合は「（空白）」として集計
                                 If Len(furyou) = 0 Then furyou = "（空白）"
                                 If Not aggItems(srcHinban2).Exists(furyou) Then
-                                        aggItems(srcHinban2)(furyou) = 0
-                                    End If
-                                    aggItems(srcHinban2)(furyou) = aggItems(srcHinban2)(furyou) + kensuu
+                                    aggItems(srcHinban2)(furyou) = 0
                                 End If
+                                aggItems(srcHinban2)(furyou) = aggItems(srcHinban2)(furyou) + kensuu
                             End If
                         End If
                     End If

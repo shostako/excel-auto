@@ -332,10 +332,9 @@ Sub 転記_流出_塗装G()
                                     ' 空欄の場合は「（空白）」として集計
                                     If Len(hdMode2) = 0 Then hdMode2 = "（空白）"
                                     If Not aggItems(hdHinban2).Exists(hdMode2) Then
-                                            aggItems(hdHinban2)(hdMode2) = 0
-                                        End If
-                                        aggItems(hdHinban2)(hdMode2) = aggItems(hdHinban2)(hdMode2) + hdSuuryou
+                                        aggItems(hdHinban2)(hdMode2) = 0
                                     End If
+                                    aggItems(hdHinban2)(hdMode2) = aggItems(hdHinban2)(hdMode2) + hdSuuryou
                                 End If
                             End If
                         End If
@@ -383,10 +382,9 @@ Sub 転記_流出_塗装G()
                                     ' 空欄の場合は「（空白）」として集計
                                     If Len(hkFuryou) = 0 Then hkFuryou = "（空白）"
                                     If Not aggItems(hkHinban2).Exists(hkFuryou) Then
-                                            aggItems(hkHinban2)(hkFuryou) = 0
-                                        End If
-                                        aggItems(hkHinban2)(hkFuryou) = aggItems(hkHinban2)(hkFuryou) + hkKensuu
+                                        aggItems(hkHinban2)(hkFuryou) = 0
                                     End If
+                                    aggItems(hkHinban2)(hkFuryou) = aggItems(hkHinban2)(hkFuryou) + hkKensuu
                                 End If
                             End If
                         End If
