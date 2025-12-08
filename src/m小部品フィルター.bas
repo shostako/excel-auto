@@ -5,8 +5,12 @@ Option Explicit
 ' マクロ名: 小部品フィルター
 ' 処理概要: D3セルの値と一致するD列の行のみ表示（不一致行は非表示）
 ' 参照セル: D3（フィルター条件）
-' フィルター対象: D7:D190（小部品名列）
-' データ範囲: B7:GP190
+' フィルター対象:
+'   - D7:D190（小部品名列）
+'   - D194:D265（コア小部品名列）
+'   - D269:D304（スリッター小部品名列）
+'   - D308:D343（ACF小部品名列）
+' データ範囲: B7:HK190, B194:HK249, B253:HK280, B284:HK311
 ' 最適化: 配列一括読み込み + 計算/イベント抑制
 ' ========================================
 
@@ -16,13 +20,15 @@ Sub 小部品フィルター()
     ' --------------------------------------------
     Dim ws As Worksheet
     Dim filterValue As String
-    Dim i As Long
+    Dim i As Long, j As Long
     Dim dataArr As Variant
 
-    Const START_ROW As Long = 7      ' データ開始行
-    Const END_ROW As Long = 190      ' データ終了行
-    Const FILTER_COL As Long = 4     ' D列（フィルター対象列）
-    Const CRITERIA_CELL As String = "D3"  ' フィルター条件セル
+    ' フィルター範囲定義（開始行, 終了行, フィルター列）
+    Dim ranges(1 To 4, 1 To 3) As Long
+    ranges(1, 1) = 7: ranges(1, 2) = 190: ranges(1, 3) = 4    ' D列（小部品）
+    ranges(2, 1) = 194: ranges(2, 2) = 265: ranges(2, 3) = 4  ' D列（コア小部品）
+    ranges(3, 1) = 269: ranges(3, 2) = 304: ranges(3, 3) = 4  ' D列（スリッター小部品）
+    ranges(4, 1) = 308: ranges(4, 2) = 343: ranges(4, 3) = 4  ' D列（ACF小部品）
 
     ' --------------------------------------------
     ' 画面更新・計算・イベント抑制（高速化）
@@ -38,26 +44,30 @@ Sub 小部品フィルター()
     ' --------------------------------------------
     ' フィルター条件の取得
     ' --------------------------------------------
-    filterValue = ws.Range(CRITERIA_CELL).Value
+    filterValue = ws.Range("D3").Value
 
     ' --------------------------------------------
-    ' 全行を表示（リセット）
+    ' 全範囲を表示（リセット）
     ' --------------------------------------------
-    ws.Rows(START_ROW & ":" & END_ROW).Hidden = False
+    For j = 1 To 4
+        ws.Rows(ranges(j, 1) & ":" & ranges(j, 2)).Hidden = False
+    Next j
 
     ' --------------------------------------------
-    ' データを配列に一括読み込み
+    ' 各範囲でフィルタリング
     ' --------------------------------------------
-    dataArr = ws.Range(ws.Cells(START_ROW, FILTER_COL), ws.Cells(END_ROW, FILTER_COL)).Value
+    For j = 1 To 4
+        ' データを配列に一括読み込み
+        dataArr = ws.Range(ws.Cells(ranges(j, 1), ranges(j, 3)), _
+                          ws.Cells(ranges(j, 2), ranges(j, 3))).Value
 
-    ' --------------------------------------------
-    ' フィルタリング：不一致行を非表示
-    ' --------------------------------------------
-    For i = 1 To UBound(dataArr, 1)
-        If dataArr(i, 1) <> filterValue Then
-            ws.Rows(START_ROW + i - 1).Hidden = True
-        End If
-    Next i
+        ' 不一致行を非表示
+        For i = 1 To UBound(dataArr, 1)
+            If dataArr(i, 1) <> filterValue Then
+                ws.Rows(ranges(j, 1) + i - 1).Hidden = True
+            End If
+        Next i
+    Next j
 
     ' --------------------------------------------
     ' スクロール位置を先頭に移動
