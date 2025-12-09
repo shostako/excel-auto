@@ -14,6 +14,10 @@
 
 **GitHub連携の判定**: `.git/config`に`[remote "origin"]`があればGitHub連携済み
 
+## PROGRESS.md手動更新時の注意
+- **時刻更新時は必ず`date '+%Y-%m-%d %H:%M'`で現在時刻を確認してから記入**
+- 推測や概算で時刻を入れない
+
 ---
 
 # 共通設定（Monday設定）
