@@ -1,15 +1,16 @@
-Attribute VB_Name = "m小部品フィルター"
+Attribute VB_Name = "m側板フィルター"
 Option Explicit
 
 ' ========================================
-' マクロ名: 小部品フィルター
-' 処理概要: D3セルの値と一致する「小部品」列の行のみ表示
-' 参照セル: D3（フィルター条件）
-' フィルター対象: 全テーブルの「小部品」列
+' マクロ名: 側板フィルター
+' 処理概要: C3セルの値と一致する「側板」列の行のみ表示
+' 参照セル: C3（フィルター条件）
+' フィルター対象: _完成品テーブルの「側板」列のみ
+' 特殊動作: 他のテーブル（_core, _slitter, _acf）はフィルター解除
 ' 最適化: 配列一括読み込み + 計算/イベント抑制
 ' ========================================
 
-Sub 小部品フィルター()
+Sub 側板フィルター()
     ' --------------------------------------------
     ' 変数宣言
     ' --------------------------------------------
@@ -20,9 +21,9 @@ Sub 小部品フィルター()
     Dim i As Long
     Dim startRow As Long
 
-    ' 対象テーブル名
-    Dim tables As Variant
-    tables = Array("_完成品", "_core", "_slitter", "_acf")
+    ' 他テーブル（フィルター解除対象）
+    Dim otherTables As Variant
+    otherTables = Array("_core", "_slitter", "_acf")
 
     ' --------------------------------------------
     ' 画面更新・計算・イベント抑制（高速化）
@@ -38,29 +39,35 @@ Sub 小部品フィルター()
     ' --------------------------------------------
     ' フィルター条件の取得
     ' --------------------------------------------
-    filterValue = ws.Range("D3").Value
+    filterValue = ws.Range("C3").Value
 
     ' --------------------------------------------
     ' 排他処理：他のフィルター参照セルをクリア
     ' --------------------------------------------
     ws.Range("B3").Value = ""
-    ws.Range("C3").Value = ""
+    ws.Range("D3").Value = ""
     ws.Range("E3").Value = "全項目"
 
     ' --------------------------------------------
-    ' 全テーブル：小部品列でフィルター
+    ' _完成品テーブル：側板列でフィルター
+    ' --------------------------------------------
+    Set tbl = ws.ListObjects("_完成品")
+    startRow = tbl.DataBodyRange.Row
+    tbl.DataBodyRange.EntireRow.Hidden = False
+    dataArr = tbl.ListColumns("側板").DataBodyRange.Value
+    For i = 1 To UBound(dataArr, 1)
+        If dataArr(i, 1) <> filterValue Then
+            ws.Rows(startRow + i - 1).Hidden = True
+        End If
+    Next i
+
+    ' --------------------------------------------
+    ' 他テーブル：フィルター解除
     ' --------------------------------------------
     Dim tblName As Variant
-    For Each tblName In tables
+    For Each tblName In otherTables
         Set tbl = ws.ListObjects(CStr(tblName))
-        startRow = tbl.DataBodyRange.Row
         tbl.DataBodyRange.EntireRow.Hidden = False
-        dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
-        For i = 1 To UBound(dataArr, 1)
-            If dataArr(i, 1) <> filterValue Then
-                ws.Rows(startRow + i - 1).Hidden = True
-            End If
-        Next i
     Next tblName
 
     ' --------------------------------------------
