@@ -8,10 +8,9 @@ Option Explicit
 ' 他のフィルター参照: B3（完成品）, C3（側板）, D3（小部品）
 ' フィルター対象: 全テーブルの「項目」列
 ' 条件分岐:
-'   - 「計画全体」→「計画」を含む行を表示
-'   - 「実績全体」→「実績」を含む行を表示
-'   - 「計画実績全体」→「計画」or「実績」を含む行を表示
-'   - その他 → 完全一致
+'   - 「全項目」→ フィルターなし
+'   - カンマ区切り → 各要素に完全一致（OR条件）
+'   - 単一値 → 完全一致
 ' 特殊動作: 一旦リセットして他のフィルターを再適用後、項目フィルターを適用
 ' 最適化: 配列一括読み込み + 計算/イベント抑制
 ' ========================================
@@ -68,18 +67,8 @@ Sub 項目フィルター()
         filterProductTrimmed = ""
     End If
 
-    ' 項目フィルターモード判定
-    filterMode = "exact"
-    Select Case filterItem
-        Case "全項目"
-            filterMode = "none"  ' フィルター適用しない
-        Case "計画全体"
-            filterMode = "contains_keikaku"
-        Case "実績全体"
-            filterMode = "contains_jisseki"
-        Case "計画実績全体"
-            filterMode = "contains_both"
-    End Select
+    ' 項目フィルターモード判定（共通関数使用）
+    filterMode = GetItemFilterMode(filterItem)
 
     ' --------------------------------------------
     ' 1. 全テーブルの行を表示（リセット）
@@ -168,33 +157,19 @@ Sub 項目フィルター()
                 rowNum = startRow + i - 1
                 If Not ws.Rows(rowNum).Hidden Then
                     cellValue = dataArr(i, 1)
-                    Select Case filterMode
-                        Case "exact"
-                            If cellValue <> filterItem Then
-                                ws.Rows(rowNum).Hidden = True
-                            End If
-                        Case "contains_keikaku"
-                            If InStr(cellValue, "計画") = 0 Then
-                                ws.Rows(rowNum).Hidden = True
-                            End If
-                        Case "contains_jisseki"
-                            If InStr(cellValue, "実績") = 0 Then
-                                ws.Rows(rowNum).Hidden = True
-                            End If
-                        Case "contains_both"
-                            If InStr(cellValue, "計画") = 0 And InStr(cellValue, "実績") = 0 Then
-                                ws.Rows(rowNum).Hidden = True
-                            End If
-                    End Select
+                    ' 共通関数で判定（カンマ区切り対応）
+                    If Not MatchItemFilter(cellValue, filterMode, filterItem) Then
+                        ws.Rows(rowNum).Hidden = True
+                    End If
                 End If
             Next i
         Next tblName
     End If
 
     ' --------------------------------------------
-    ' スクロール位置を先頭に移動
+    ' 垂直スクロールのみ先頭に移動（水平位置は維持）
     ' --------------------------------------------
-    Application.Goto ws.Range("A1"), True
+    ActiveWindow.ScrollRow = 1
 
     ' --------------------------------------------
     ' 終了処理

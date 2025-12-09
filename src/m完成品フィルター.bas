@@ -4,10 +4,11 @@ Option Explicit
 ' ========================================
 ' マクロ名: 完成品フィルター
 ' 処理概要: B3セルの値で完成品をフィルター、末尾4字除去した値で小部品をフィルター
-' 参照セル: B3（フィルター条件）
+' 参照セル: B3（フィルター条件）, E3（項目フィルター条件）
 ' フィルター対象:
 '   - _完成品テーブル「製品名」列 → B3そのまま
 '   - _core, _slitter, _acfテーブル「小部品」列 → B3末尾4字除去
+' 複合フィルター: 項目フィルター（E3）の条件も同時に適用
 ' 最適化: 配列一括読み込み + 計算/イベント抑制
 ' ========================================
 
@@ -21,8 +22,13 @@ Sub 完成品フィルター()
     Dim filterValueTrimmed As String
     Dim rawValue As String
     Dim dataArr As Variant
+    Dim itemArr As Variant
     Dim i As Long
     Dim startRow As Long
+
+    ' 項目フィルター用
+    Dim filterItem As String
+    Dim filterMode As String
 
     ' 小部品テーブル名
     Dim subTables As Variant
@@ -46,6 +52,10 @@ Sub 完成品フィルター()
     filterValue = rawValue                              ' 完成品用（そのまま）
     filterValueTrimmed = Left(rawValue, Len(rawValue) - 4)  ' 小部品用（末尾4字除去）
 
+    ' 項目フィルター条件の取得
+    filterItem = ws.Range("E3").Value
+    filterMode = GetItemFilterMode(filterItem)
+
     ' --------------------------------------------
     ' 排他処理：他のフィルター参照セルをクリア
     ' （E3項目フィルターは変更しない）
@@ -54,20 +64,21 @@ Sub 完成品フィルター()
     ws.Range("D3").Value = ""
 
     ' --------------------------------------------
-    ' _完成品テーブル：製品名列でフィルター
+    ' _完成品テーブル：製品名列 AND 項目列でフィルター
     ' --------------------------------------------
     Set tbl = FindTableByPattern(ws, "_完成品")
     startRow = tbl.DataBodyRange.Row
     tbl.DataBodyRange.EntireRow.Hidden = False
     dataArr = tbl.ListColumns("製品名").DataBodyRange.Value
+    itemArr = tbl.ListColumns("項目").DataBodyRange.Value
     For i = 1 To UBound(dataArr, 1)
-        If dataArr(i, 1) <> filterValue Then
+        If dataArr(i, 1) <> filterValue Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
             ws.Rows(startRow + i - 1).Hidden = True
         End If
     Next i
 
     ' --------------------------------------------
-    ' 小部品テーブル：小部品列でフィルター（末尾4字除去）
+    ' 小部品テーブル：小部品列 AND 項目列でフィルター（末尾4字除去）
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In subTables
@@ -75,17 +86,18 @@ Sub 完成品フィルター()
         startRow = tbl.DataBodyRange.Row
         tbl.DataBodyRange.EntireRow.Hidden = False
         dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
+        itemArr = tbl.ListColumns("項目").DataBodyRange.Value
         For i = 1 To UBound(dataArr, 1)
-            If dataArr(i, 1) <> filterValueTrimmed Then
+            If dataArr(i, 1) <> filterValueTrimmed Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
                 ws.Rows(startRow + i - 1).Hidden = True
             End If
         Next i
     Next tblName
 
     ' --------------------------------------------
-    ' スクロール位置を先頭に移動
+    ' 垂直スクロールのみ先頭に移動（水平位置は維持）
     ' --------------------------------------------
-    Application.Goto ws.Range("A1"), True
+    ActiveWindow.ScrollRow = 1
 
     ' --------------------------------------------
     ' 終了処理
