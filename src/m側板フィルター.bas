@@ -51,7 +51,7 @@ Sub 側板フィルター()
     ' --------------------------------------------
     ' _完成品テーブル：側板列でフィルター
     ' --------------------------------------------
-    Set tbl = ws.ListObjects("_完成品")
+    Set tbl = FindTableByPattern(ws, "_完成品")
     startRow = tbl.DataBodyRange.Row
     tbl.DataBodyRange.EntireRow.Hidden = False
     dataArr = tbl.ListColumns("側板").DataBodyRange.Value
@@ -66,7 +66,7 @@ Sub 側板フィルター()
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In otherTables
-        Set tbl = ws.ListObjects(CStr(tblName))
+        Set tbl = FindTableByPattern(ws, CStr(tblName))
         tbl.DataBodyRange.EntireRow.Hidden = False
     Next tblName
 

@@ -33,7 +33,7 @@ Sub フィルター解除()
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In tables
-        Set tbl = ws.ListObjects(CStr(tblName))
+        Set tbl = FindTableByPattern(ws, CStr(tblName))
         tbl.DataBodyRange.EntireRow.Hidden = False
     Next tblName
 

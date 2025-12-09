@@ -56,7 +56,7 @@ Sub 完成品フィルター()
     ' --------------------------------------------
     ' _完成品テーブル：製品名列でフィルター
     ' --------------------------------------------
-    Set tbl = ws.ListObjects("_完成品")
+    Set tbl = FindTableByPattern(ws, "_完成品")
     startRow = tbl.DataBodyRange.Row
     tbl.DataBodyRange.EntireRow.Hidden = False
     dataArr = tbl.ListColumns("製品名").DataBodyRange.Value
@@ -71,7 +71,7 @@ Sub 完成品フィルター()
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In subTables
-        Set tbl = ws.ListObjects(CStr(tblName))
+        Set tbl = FindTableByPattern(ws, CStr(tblName))
         startRow = tbl.DataBodyRange.Row
         tbl.DataBodyRange.EntireRow.Hidden = False
         dataArr = tbl.ListColumns("小部品").DataBodyRange.Value

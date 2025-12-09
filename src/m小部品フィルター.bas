@@ -52,7 +52,7 @@ Sub 小部品フィルター()
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In tables
-        Set tbl = ws.ListObjects(CStr(tblName))
+        Set tbl = FindTableByPattern(ws, CStr(tblName))
         startRow = tbl.DataBodyRange.Row
         tbl.DataBodyRange.EntireRow.Hidden = False
         dataArr = tbl.ListColumns("小部品").DataBodyRange.Value

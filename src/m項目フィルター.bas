@@ -86,7 +86,7 @@ Sub 項目フィルター()
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In tables
-        Set tbl = ws.ListObjects(CStr(tblName))
+        Set tbl = FindTableByPattern(ws, CStr(tblName))
         tbl.DataBodyRange.EntireRow.Hidden = False
     Next tblName
 
@@ -95,7 +95,7 @@ Sub 項目フィルター()
     ' --------------------------------------------
     If Len(filterProduct) > 0 Then
         ' _完成品テーブル：製品名列
-        Set tbl = ws.ListObjects("_完成品")
+        Set tbl = FindTableByPattern(ws, "_完成品")
         startRow = tbl.DataBodyRange.Row
         dataArr = tbl.ListColumns("製品名").DataBodyRange.Value
         For i = 1 To UBound(dataArr, 1)
@@ -107,7 +107,7 @@ Sub 項目フィルター()
         ' 小部品テーブル：小部品列（末尾4字除去）
         If Len(filterProductTrimmed) > 0 Then
             For Each tblName In subTables
-                Set tbl = ws.ListObjects(CStr(tblName))
+                Set tbl = FindTableByPattern(ws, CStr(tblName))
                 startRow = tbl.DataBodyRange.Row
                 dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
                 For i = 1 To UBound(dataArr, 1)
@@ -123,7 +123,7 @@ Sub 項目フィルター()
     ' 3. 側板フィルター再適用（C3が空でない場合、_完成品のみ）
     ' --------------------------------------------
     If Len(filterSide) > 0 Then
-        Set tbl = ws.ListObjects("_完成品")
+        Set tbl = FindTableByPattern(ws, "_完成品")
         startRow = tbl.DataBodyRange.Row
         dataArr = tbl.ListColumns("側板").DataBodyRange.Value
         For i = 1 To UBound(dataArr, 1)
@@ -141,7 +141,7 @@ Sub 項目フィルター()
     ' --------------------------------------------
     If Len(filterPart) > 0 Then
         For Each tblName In tables
-            Set tbl = ws.ListObjects(CStr(tblName))
+            Set tbl = FindTableByPattern(ws, CStr(tblName))
             startRow = tbl.DataBodyRange.Row
             dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
             For i = 1 To UBound(dataArr, 1)
@@ -160,7 +160,7 @@ Sub 項目フィルター()
     ' --------------------------------------------
     If Len(filterItem) > 0 And filterMode <> "none" Then
         For Each tblName In tables
-            Set tbl = ws.ListObjects(CStr(tblName))
+            Set tbl = FindTableByPattern(ws, CStr(tblName))
             startRow = tbl.DataBodyRange.Row
             dataArr = tbl.ListColumns("項目").DataBodyRange.Value
 
