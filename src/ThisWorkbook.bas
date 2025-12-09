@@ -8,15 +8,17 @@ Attribute VB_Name = "ThisWorkbook"
 Option Explicit
 
 ' --------------------------------------------
-' 全シート共通：セル変更時のフィルター自動実行
-' B3, C3, D3, E3の変更を検知してフィルターマクロを呼び出す
+' 全シート共通：セル変更時のフィルター・日付表示自動実行
+' A3: 日付表示、B3-E3: フィルターマクロを呼び出す
 ' --------------------------------------------
 Private Sub Workbook_SheetChange(ByVal Sh As Object, ByVal Target As Range)
-    ' B3:E3の範囲と交差するか判定
-    If Not Intersect(Target, Sh.Range("B3:E3")) Is Nothing Then
+    ' A3:E3の範囲と交差するか判定
+    If Not Intersect(Target, Sh.Range("A3:E3")) Is Nothing Then
         Application.EnableEvents = False  ' 無限ループ防止
 
         Select Case Target.Address
+            Case "$A$3"
+                If Len(Target.Value) > 0 Then Call 日付表示
             Case "$B$3"
                 If Len(Target.Value) > 0 Then Call 完成品フィルター
             Case "$C$3"
