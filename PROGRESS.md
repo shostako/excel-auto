@@ -1,7 +1,7 @@
 # プロジェクト進捗状況
 
 ## 現在の状態
-- **最終更新**: 2025-12-11 12:44
+- **最終更新**: 2025-12-11 18:17
 - **アクティブタスク**: なし（継続的なマクロ開発・保守）
 
 ## 完了済み
@@ -22,12 +22,13 @@
 - [x] イベントコード分配方式変更（Workbook_SheetChange → 各シートのWorksheet_Change）
 - [x] 項目フィルター「合計」行常時表示機能追加
 - [x] /wrapコマンド新規作成（セッション終了処理一括実行）
+- [x] .claude/rules/ディレクトリ導入（CLAUDE.md分割管理）
 
 ## 未完了・保留
-（現在なし - 随時マクロ開発依頼に対応）
+- [ ] Phase 2: 親プロジェクトに共通ルール展開（シンボリックリンク方式）
 
 ## 次セッションへの引き継ぎ
-- **次のアクション**: 特になし。新規マクロ開発・修正依頼待ち
+- **次のアクション**: 親プロジェクトで.claude/rules/展開（Phase 2）
 - **重要な発見**:
   - **文字コード**: inboxファイルはShift-JIS（必ずiconvで変換してから読む）
   - **Plan Mode**: 調査は直接実行（iconv）、サブエージェント不要
@@ -36,11 +37,14 @@
   - **項目フィルター**: カンマ区切りで複数値指定可能（OR条件）
   - **イベントコード方式**: Workbook_SheetChangeは全シートで発火するため、異なる書式のシートがあるとエラーになる。各シートのWorksheet_Changeに分配する方式が安全
   - **セッション終了**: `/wrap`コマンドでコミット・ログ・PROGRESS更新・push・クリーンアップを一括実行
+  - **.claude/rules/**: v2.0.64新機能。CLAUDE.mdを分割管理可能。番号プレフィックスで整理
 - **参照すべきリソース**:
+  - `.claude/rules/`（分割されたルールファイル）
   - `docs/excel-knowledge/claude-code/EXCEL_MACRO_KNOWLEDGE_BASE.md`（実戦的ナレッジ）
   - `docs/excel-knowledge/failures/001_activate_vs_screenupdating.md`（画面ちらつき問題）
   - `logs/2025-12.md`（フィルターマクロ改修の詳細）
 
 ## 直近のGitコミット
+- 1aa1435 feat: .claude/rules/ディレクトリ導入・CLAUDE.md分割
+- 099941e feat: /wrapコマンド新規作成・Mondayの行動ルール追加
 - 1b79cc6 docs: PROGRESS.md・作業ログ更新
-- eede01d feat: 項目フィルターに「合計」行常時表示機能追加
