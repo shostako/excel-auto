@@ -11,6 +11,7 @@ Option Explicit
 '   - 「全項目」→ フィルターなし
 '   - カンマ区切り → 各要素に完全一致（OR条件）
 '   - 単一値 → 完全一致
+'   - 「合計」行 → 常に表示（フィルター条件に関わらず）
 ' 特殊動作: 一旦リセットして他のフィルターを再適用後、項目フィルターを適用
 ' 最適化: 配列一括読み込み + 計算/イベント抑制
 ' ========================================
@@ -157,8 +158,11 @@ Sub 項目フィルター()
                 rowNum = startRow + i - 1
                 If Not ws.Rows(rowNum).Hidden Then
                     cellValue = dataArr(i, 1)
+                    ' 「合計」行は常に表示
+                    If cellValue = "合計" Then
+                        ' 何もしない（常に表示）
                     ' 共通関数で判定（カンマ区切り対応）
-                    If Not MatchItemFilter(cellValue, filterMode, filterItem) Then
+                    ElseIf Not MatchItemFilter(cellValue, filterMode, filterItem) Then
                         ws.Rows(rowNum).Hidden = True
                     End If
                 End If
