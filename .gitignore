@@ -38,7 +38,12 @@ test/output/
 .env
 .mcp.json
 .mcp/
-.claude/
+
+# Claude Code設定（rulesは共有、他はローカル）
+.claude/*
+!.claude/rules/
+!.claude/commands/
+!.claude/skills/
 
 # 空ディレクトリ
 ready/
