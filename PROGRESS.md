@@ -1,7 +1,7 @@
 # プロジェクト進捗状況
 
 ## 現在の状態
-- **最終更新**: 2025-12-11 12:36
+- **最終更新**: 2025-12-11 12:44
 - **アクティブタスク**: なし（継続的なマクロ開発・保守）
 
 ## 完了済み
@@ -21,6 +21,7 @@
 - [x] 項目フィルターカンマ区切り対応（「実績,計画」等でOR条件）
 - [x] イベントコード分配方式変更（Workbook_SheetChange → 各シートのWorksheet_Change）
 - [x] 項目フィルター「合計」行常時表示機能追加
+- [x] /wrapコマンド新規作成（セッション終了処理一括実行）
 
 ## 未完了・保留
 （現在なし - 随時マクロ開発依頼に対応）
@@ -34,11 +35,12 @@
   - **空欄処理修正パターン**: `If Len(xxx) > 0 Then`を削除して`If Len(xxx) = 0 Then xxx = "（空白）"`を追加する際、対応する`End If`も削除すること
   - **項目フィルター**: カンマ区切りで複数値指定可能（OR条件）
   - **イベントコード方式**: Workbook_SheetChangeは全シートで発火するため、異なる書式のシートがあるとエラーになる。各シートのWorksheet_Changeに分配する方式が安全
+  - **セッション終了**: `/wrap`コマンドでコミット・ログ・PROGRESS更新・push・クリーンアップを一括実行
 - **参照すべきリソース**:
   - `docs/excel-knowledge/claude-code/EXCEL_MACRO_KNOWLEDGE_BASE.md`（実戦的ナレッジ）
   - `docs/excel-knowledge/failures/001_activate_vs_screenupdating.md`（画面ちらつき問題）
   - `logs/2025-12.md`（フィルターマクロ改修の詳細）
 
 ## 直近のGitコミット
+- 1b79cc6 docs: PROGRESS.md・作業ログ更新
 - eede01d feat: 項目フィルターに「合計」行常時表示機能追加
-- b3a5452 feat: ワークシート用イベントコード追加（Sheet1.cls）
