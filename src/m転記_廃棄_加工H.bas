@@ -308,7 +308,7 @@ Sub 転記_廃棄_加工H()
         End If
 
         Dim titleText As String
-        titleText = "廃棄H_加工_" & periodName & "_" & Format(startDate, "m/d") & "‾" & Format(endDate, "m/d")
+        titleText = "加工_廃棄のみ_" & Format(startDate, "m/d") & "‾" & Format(endDate, "m/d")
 
         With wsTarget.Cells(currentRow, 1)
             .Value = titleText
