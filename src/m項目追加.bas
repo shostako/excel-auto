@@ -59,9 +59,15 @@ Sub 項目追加(tableName As String, targetItem As String, newItem As String)
     Set ws = ActiveSheet
 
     ' --------------------------------------------
-    ' テーブル取得
+    ' テーブル取得（完全一致）
     ' --------------------------------------------
-    Set tbl = FindTableByPattern(ws, tableName)
+    Dim tmpTbl As ListObject
+    For Each tmpTbl In ws.ListObjects
+        If tmpTbl.Name = tableName Then
+            Set tbl = tmpTbl
+            Exit For
+        End If
+    Next tmpTbl
     If tbl Is Nothing Then
         MsgBox "「" & tableName & "」テーブルが見つかりません", vbExclamation
         GoTo Cleanup
