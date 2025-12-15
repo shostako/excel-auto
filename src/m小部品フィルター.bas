@@ -7,6 +7,7 @@ Option Explicit
 ' 参照セル: D3（フィルター条件）, E3（項目フィルター条件）
 ' フィルター対象: 全テーブルの「小部品」列
 ' 複合フィルター: 項目フィルター（E3）の条件も同時に適用
+' 特殊行: 「稼働日」行は常に表示
 ' 最適化: 配列一括読み込み + 計算/イベント抑制
 ' ========================================
 
@@ -68,8 +69,11 @@ Sub 小部品フィルター()
         dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
         itemArr = tbl.ListColumns("項目").DataBodyRange.Value
         For i = 1 To UBound(dataArr, 1)
-            If dataArr(i, 1) <> filterValue Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
-                ws.Rows(startRow + i - 1).Hidden = True
+            ' 「稼働日」行は常に表示
+            If itemArr(i, 1) <> "稼働日" Then
+                If dataArr(i, 1) <> filterValue Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
+                    ws.Rows(startRow + i - 1).Hidden = True
+                End If
             End If
         Next i
     Next tblName

@@ -9,6 +9,7 @@ Option Explicit
 '   - _完成品テーブル「製品名」列 → B3そのまま
 '   - _core, _slitter, _acfテーブル「小部品」列 → B3末尾4字除去
 ' 複合フィルター: 項目フィルター（E3）の条件も同時に適用
+' 特殊行: 「稼働日」行は常に表示
 ' 最適化: 配列一括読み込み + 計算/イベント抑制
 ' ========================================
 
@@ -72,8 +73,11 @@ Sub 完成品フィルター()
     dataArr = tbl.ListColumns("製品名").DataBodyRange.Value
     itemArr = tbl.ListColumns("項目").DataBodyRange.Value
     For i = 1 To UBound(dataArr, 1)
-        If dataArr(i, 1) <> filterValue Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
-            ws.Rows(startRow + i - 1).Hidden = True
+        ' 「稼働日」行は常に表示
+        If itemArr(i, 1) <> "稼働日" Then
+            If dataArr(i, 1) <> filterValue Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
+                ws.Rows(startRow + i - 1).Hidden = True
+            End If
         End If
     Next i
 
@@ -88,8 +92,11 @@ Sub 完成品フィルター()
         dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
         itemArr = tbl.ListColumns("項目").DataBodyRange.Value
         For i = 1 To UBound(dataArr, 1)
-            If dataArr(i, 1) <> filterValueTrimmed Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
-                ws.Rows(startRow + i - 1).Hidden = True
+            ' 「稼働日」行は常に表示
+            If itemArr(i, 1) <> "稼働日" Then
+                If dataArr(i, 1) <> filterValueTrimmed Or Not MatchItemFilter(CStr(itemArr(i, 1)), filterMode, filterItem) Then
+                    ws.Rows(startRow + i - 1).Hidden = True
+                End If
             End If
         Next i
     Next tblName
