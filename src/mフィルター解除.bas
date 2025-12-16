@@ -3,8 +3,11 @@ Option Explicit
 
 ' ========================================
 ' マクロ名: フィルター解除
-' 処理概要: 全テーブルの行非表示を解除（全行を表示）
+' 処理概要: 全テーブルのフィルターを解除（全行を表示）
 ' 対象テーブル: _完成品, _core, _slitter, _acf
+' 解除対象:
+'   - 行の非表示（EntireRow.Hidden）
+'   - オートフィルター（AutoFilter）
 ' ========================================
 
 Sub フィルター解除()
@@ -29,12 +32,27 @@ Sub フィルター解除()
     Set ws = ActiveSheet
 
     ' --------------------------------------------
-    ' 全テーブルの行を表示（フィルター解除）
+    ' 全テーブルのフィルターを解除
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In tables
         Set tbl = FindTableByPattern(ws, CStr(tblName))
-        tbl.DataBodyRange.EntireRow.Hidden = False
+
+        ' テーブルが見つからない場合はスキップ
+        If tbl Is Nothing Then GoTo NextTable
+
+        ' データ行がある場合のみ処理
+        If Not tbl.DataBodyRange Is Nothing Then
+            ' 行の非表示を解除
+            tbl.DataBodyRange.EntireRow.Hidden = False
+        End If
+
+        ' オートフィルターをリセット（フィルター適用中の場合のみ）
+        If tbl.AutoFilter.FilterMode Then
+            tbl.AutoFilter.ShowAllData
+        End If
+
+NextTable:
     Next tblName
 
     ' --------------------------------------------
