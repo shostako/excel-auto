@@ -9,10 +9,13 @@ Option Explicit
 '   targetItem - 検索する項目値（この行の下に追加）
 '   newItem - 追加する行の項目値
 ' 処理詳細:
-'   - 製品名/側板/小部品：上の行の値・書式をコピー
+'   - 製品名/側板/詳細/小部品：存在する列のみ上の行の値・書式をコピー
 '   - 項目：newItemを設定
 '   - 合計：空白
 '   - その他（日付列等）：文字色自動、数値フォーマット、左隣セル参照関数
+' 対応テーブル:
+'   - _完成品系：製品名、側板、小部品列あり
+'   - _core/_slitter/_acf系：詳細、小部品列あり
 ' 冪等性: 直下にnewItemが既に存在する場合はスキップ
 ' 注意: フィルターがかかっている場合は自動解除される
 ' ========================================
@@ -28,9 +31,10 @@ Sub 項目追加(tableName As String, targetItem As String, newItem As String)
     Dim i As Long
     Dim insertCount As Long
 
-    ' 列インデックス
+    ' 列インデックス（0は列なしを意味）
     Dim colProduct As Long      ' 製品名
     Dim colSide As Long         ' 側板
+    Dim colDetail As Long       ' 詳細
     Dim colPart As Long         ' 小部品
     Dim colItem As Long         ' 項目
     Dim colTotal As Long        ' 合計
@@ -83,11 +87,12 @@ Sub 項目追加(tableName As String, targetItem As String, newItem As String)
     End If
 
     ' --------------------------------------------
-    ' 列インデックス取得
+    ' 列インデックス取得（存在チェック付き、0は列なし）
     ' --------------------------------------------
-    colProduct = tbl.ListColumns("製品名").Index
-    colSide = tbl.ListColumns("側板").Index
-    colPart = tbl.ListColumns("小部品").Index
+    If HasColumn(tbl, "製品名") Then colProduct = tbl.ListColumns("製品名").Index Else colProduct = 0
+    If HasColumn(tbl, "側板") Then colSide = tbl.ListColumns("側板").Index Else colSide = 0
+    If HasColumn(tbl, "詳細") Then colDetail = tbl.ListColumns("詳細").Index Else colDetail = 0
+    If HasColumn(tbl, "小部品") Then colPart = tbl.ListColumns("小部品").Index Else colPart = 0
     colItem = tbl.ListColumns("項目").Index
     colTotal = tbl.ListColumns("合計").Index
     lastCol = tbl.ListColumns.Count
@@ -137,16 +142,27 @@ Sub 項目追加(tableName As String, targetItem As String, newItem As String)
         srcRow = tblStartRow + rowIdx - 1  ' targetItemのシート行番号
 
         ' --------------------------------------------
-        ' 製品名/側板/小部品：上の行から値・書式をコピー
+        ' 製品名/側板/詳細/小部品：存在する列のみ上の行から値・書式をコピー
         ' --------------------------------------------
-        ws.Cells(srcRow, tbl.Range.Column + colProduct - 1).Copy
-        ws.Cells(srcRow + 1, tbl.Range.Column + colProduct - 1).PasteSpecial xlPasteAll
+        If colProduct > 0 Then
+            ws.Cells(srcRow, tbl.Range.Column + colProduct - 1).Copy
+            ws.Cells(srcRow + 1, tbl.Range.Column + colProduct - 1).PasteSpecial xlPasteAll
+        End If
 
-        ws.Cells(srcRow, tbl.Range.Column + colSide - 1).Copy
-        ws.Cells(srcRow + 1, tbl.Range.Column + colSide - 1).PasteSpecial xlPasteAll
+        If colSide > 0 Then
+            ws.Cells(srcRow, tbl.Range.Column + colSide - 1).Copy
+            ws.Cells(srcRow + 1, tbl.Range.Column + colSide - 1).PasteSpecial xlPasteAll
+        End If
 
-        ws.Cells(srcRow, tbl.Range.Column + colPart - 1).Copy
-        ws.Cells(srcRow + 1, tbl.Range.Column + colPart - 1).PasteSpecial xlPasteAll
+        If colDetail > 0 Then
+            ws.Cells(srcRow, tbl.Range.Column + colDetail - 1).Copy
+            ws.Cells(srcRow + 1, tbl.Range.Column + colDetail - 1).PasteSpecial xlPasteAll
+        End If
+
+        If colPart > 0 Then
+            ws.Cells(srcRow, tbl.Range.Column + colPart - 1).Copy
+            ws.Cells(srcRow + 1, tbl.Range.Column + colPart - 1).PasteSpecial xlPasteAll
+        End If
 
         ' --------------------------------------------
         ' 項目：newItemを設定（書式デフォルト）
@@ -209,3 +225,14 @@ ErrorHandler:
            "エラー番号: " & Err.Number & vbCrLf & _
            "詳細: " & Err.Description, vbCritical
 End Sub
+
+' ========================================
+' 列存在チェック関数
+' ========================================
+Private Function HasColumn(tbl As ListObject, colName As String) As Boolean
+    Dim col As ListColumn
+    On Error Resume Next
+    Set col = tbl.ListColumns(colName)
+    HasColumn = Not col Is Nothing
+    On Error GoTo 0
+End Function
