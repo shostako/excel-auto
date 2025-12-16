@@ -3,17 +3,15 @@ Option Explicit
 
 ' ========================================
 ' マクロ名: 項目フィルター
-' 処理概要: E3セルの値に基づいて「項目」列をフィルター（複合フィルター対応）
+' 処理概要: E3セルの値でオートフィルターを適用
 ' 参照セル: E3（項目フィルター条件）
-' 他のフィルター参照: B3（完成品）, C3（側板）, D3（小部品）
 ' フィルター対象: 全テーブルの「項目」列
 ' 条件分岐:
-'   - 「全項目」→ フィルターなし
-'   - カンマ区切り → 各要素に完全一致（OR条件）
-'   - 単一値 → 完全一致
-'   - 「合計」「稼働日」行 → 常に表示（フィルター条件に関わらず）
-' 特殊動作: 一旦リセットして他のフィルターを再適用後、項目フィルターを適用
-' 最適化: 配列一括読み込み + 計算/イベント抑制
+'   - 「全項目」→ フィルター解除
+'   - カンマ区切り → 各要素でOR条件フィルター
+'   - 単一値 → その値でフィルター
+'   - 「合計」「稼働日」行 → 常に表示（フィルター条件に自動追加）
+' 複合フィルター: 他のフィルターは維持（オートフィルター方式）
 ' ========================================
 
 Sub 項目フィルター()
@@ -23,30 +21,18 @@ Sub 項目フィルター()
     Dim ws As Worksheet
     Dim tbl As ListObject
     Dim filterItem As String
-    Dim filterProduct As String
-    Dim filterSide As String
-    Dim filterPart As String
-    Dim filterProductTrimmed As String
-    Dim filterMode As String
-    Dim dataArr As Variant
+    Dim colIndex As Long
+    Dim filterArray() As String
     Dim i As Long
-    Dim startRow As Long
-    Dim rowNum As Long
-    Dim cellValue As String
 
     ' 対象テーブル名
     Dim tables As Variant
     tables = Array("_完成品", "_core", "_slitter", "_acf")
 
-    ' 小部品テーブル名（完成品フィルター用）
-    Dim subTables As Variant
-    subTables = Array("_core", "_slitter", "_acf")
-
     ' --------------------------------------------
-    ' 画面更新・計算・イベント抑制（高速化）
+    ' 画面更新・イベント抑制（高速化）
     ' --------------------------------------------
     Application.ScreenUpdating = False
-    Application.Calculation = xlCalculationManual
     Application.EnableEvents = False
 
     On Error GoTo ErrorHandler
@@ -54,121 +40,34 @@ Sub 項目フィルター()
     Set ws = ActiveSheet
 
     ' --------------------------------------------
-    ' 全フィルター条件の取得
+    ' フィルター条件の取得
     ' --------------------------------------------
-    filterProduct = ws.Range("B3").Value      ' 完成品
-    filterSide = ws.Range("C3").Value         ' 側板
-    filterPart = ws.Range("D3").Value         ' 小部品
-    filterItem = ws.Range("E3").Value         ' 項目
-
-    ' 完成品フィルター用（末尾4字除去）
-    If Len(filterProduct) > 4 Then
-        filterProductTrimmed = Left(filterProduct, Len(filterProduct) - 4)
-    Else
-        filterProductTrimmed = ""
-    End If
-
-    ' 項目フィルターモード判定（共通関数使用）
-    filterMode = GetItemFilterMode(filterItem)
+    filterItem = ws.Range("E3").Value
 
     ' --------------------------------------------
-    ' 1. 全テーブルの行を表示（リセット）
+    ' 全テーブル：項目列にオートフィルター
     ' --------------------------------------------
     Dim tblName As Variant
     For Each tblName In tables
         Set tbl = FindTableByPattern(ws, CStr(tblName))
-        tbl.DataBodyRange.EntireRow.Hidden = False
-    Next tblName
+        colIndex = tbl.ListColumns("項目").Index
 
-    ' --------------------------------------------
-    ' 2. 完成品フィルター再適用（B3が空でない場合）
-    ' --------------------------------------------
-    If Len(filterProduct) > 0 Then
-        ' _完成品テーブル：製品名列
-        Set tbl = FindTableByPattern(ws, "_完成品")
-        startRow = tbl.DataBodyRange.Row
-        dataArr = tbl.ListColumns("製品名").DataBodyRange.Value
-        For i = 1 To UBound(dataArr, 1)
-            If dataArr(i, 1) <> filterProduct Then
-                ws.Rows(startRow + i - 1).Hidden = True
+        If filterItem = "全項目" Or filterItem = "" Then
+            ' フィルター解除
+            If tbl.AutoFilter.FilterMode Then
+                ' 該当列のフィルターのみ解除
+                tbl.Range.AutoFilter Field:=colIndex
             End If
-        Next i
+        Else
+            ' フィルター条件を配列に変換（「合計」「稼働日」を自動追加）
+            filterArray = BuildItemFilterArray(filterItem)
 
-        ' 小部品テーブル：小部品列（末尾4字除去）
-        If Len(filterProductTrimmed) > 0 Then
-            For Each tblName In subTables
-                Set tbl = FindTableByPattern(ws, CStr(tblName))
-                startRow = tbl.DataBodyRange.Row
-                dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
-                For i = 1 To UBound(dataArr, 1)
-                    If dataArr(i, 1) <> filterProductTrimmed Then
-                        ws.Rows(startRow + i - 1).Hidden = True
-                    End If
-                Next i
-            Next tblName
+            ' フィルター適用（複数値）
+            tbl.Range.AutoFilter Field:=colIndex, _
+                Criteria1:=filterArray, _
+                Operator:=xlFilterValues
         End If
-    End If
-
-    ' --------------------------------------------
-    ' 3. 側板フィルター再適用（C3が空でない場合、_完成品のみ）
-    ' --------------------------------------------
-    If Len(filterSide) > 0 Then
-        Set tbl = FindTableByPattern(ws, "_完成品")
-        startRow = tbl.DataBodyRange.Row
-        dataArr = tbl.ListColumns("側板").DataBodyRange.Value
-        For i = 1 To UBound(dataArr, 1)
-            rowNum = startRow + i - 1
-            If Not ws.Rows(rowNum).Hidden Then
-                If dataArr(i, 1) <> filterSide Then
-                    ws.Rows(rowNum).Hidden = True
-                End If
-            End If
-        Next i
-    End If
-
-    ' --------------------------------------------
-    ' 4. 小部品フィルター再適用（D3が空でない場合）
-    ' --------------------------------------------
-    If Len(filterPart) > 0 Then
-        For Each tblName In tables
-            Set tbl = FindTableByPattern(ws, CStr(tblName))
-            startRow = tbl.DataBodyRange.Row
-            dataArr = tbl.ListColumns("小部品").DataBodyRange.Value
-            For i = 1 To UBound(dataArr, 1)
-                rowNum = startRow + i - 1
-                If Not ws.Rows(rowNum).Hidden Then
-                    If dataArr(i, 1) <> filterPart Then
-                        ws.Rows(rowNum).Hidden = True
-                    End If
-                End If
-            Next i
-        Next tblName
-    End If
-
-    ' --------------------------------------------
-    ' 5. 項目フィルター適用（E3が空でなく、かつ「全項目」でない場合）
-    ' --------------------------------------------
-    If Len(filterItem) > 0 And filterMode <> "none" Then
-        For Each tblName In tables
-            Set tbl = FindTableByPattern(ws, CStr(tblName))
-            startRow = tbl.DataBodyRange.Row
-            dataArr = tbl.ListColumns("項目").DataBodyRange.Value
-
-            For i = 1 To UBound(dataArr, 1)
-                rowNum = startRow + i - 1
-                If Not ws.Rows(rowNum).Hidden Then
-                    cellValue = dataArr(i, 1)
-                    ' 「合計」「稼働日」行は常に表示
-                    If cellValue = "合計" Or cellValue = "稼働日" Then
-                        ' 何もしない（常に表示）
-                    ' 共通関数で判定（カンマ区切り対応）
-                    ElseIf Not MatchItemFilter(cellValue, filterMode, filterItem) Then
-                        ws.Rows(rowNum).Hidden = True
-                    End If
-                End If
-            Next i
-        Next tblName
-    End If
+    Next tblName
 
     ' --------------------------------------------
     ' 垂直スクロールのみ先頭に移動（水平位置は維持）
@@ -179,15 +78,62 @@ Sub 項目フィルター()
     ' 終了処理
     ' --------------------------------------------
     Application.ScreenUpdating = True
-    Application.Calculation = xlCalculationAutomatic
     Application.EnableEvents = True
     Exit Sub
 
 ErrorHandler:
     Application.ScreenUpdating = True
-    Application.Calculation = xlCalculationAutomatic
     Application.EnableEvents = True
     MsgBox "エラーが発生しました" & vbCrLf & _
            "エラー番号: " & Err.Number & vbCrLf & _
            "詳細: " & Err.Description, vbCritical
 End Sub
+
+' ========================================
+' フィルター条件配列を構築（「合計」「稼働日」を自動追加）
+' ========================================
+Public Function BuildItemFilterArray(ByVal filterItem As String) As String()
+    Dim baseItems() As String
+    Dim result() As String
+    Dim i As Long
+    Dim count As Long
+    Dim hasGoukei As Boolean
+    Dim hasKadoubi As Boolean
+
+    ' カンマ区切りで分割
+    baseItems = Split(filterItem, ",")
+
+    ' 既存の「合計」「稼働日」チェック
+    hasGoukei = False
+    hasKadoubi = False
+    For i = 0 To UBound(baseItems)
+        baseItems(i) = Trim(baseItems(i))
+        If baseItems(i) = "合計" Then hasGoukei = True
+        If baseItems(i) = "稼働日" Then hasKadoubi = True
+    Next i
+
+    ' 結果配列のサイズを計算
+    count = UBound(baseItems) + 1
+    If Not hasGoukei Then count = count + 1
+    If Not hasKadoubi Then count = count + 1
+
+    ReDim result(0 To count - 1)
+
+    ' 基本項目をコピー
+    For i = 0 To UBound(baseItems)
+        result(i) = baseItems(i)
+    Next i
+
+    ' 「合計」「稼働日」を追加（まだない場合）
+    Dim idx As Long
+    idx = UBound(baseItems) + 1
+    If Not hasGoukei Then
+        result(idx) = "合計"
+        idx = idx + 1
+    End If
+    If Not hasKadoubi Then
+        result(idx) = "稼働日"
+    End If
+
+    BuildItemFilterArray = result
+End Function
