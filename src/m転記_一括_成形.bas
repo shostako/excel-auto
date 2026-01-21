@@ -1,29 +1,31 @@
-Attribute VB_Name = "m転記_一括_加工"
+Attribute VB_Name = "m転記_一括_成形"
 Option Explicit
 
 ' ============================================
-' 加工関連マクロ一括実行
+' 成形関連マクロ一括実行
 ' ============================================
-' アクティブシートの期間設定を基準に、加工関連の全マクロを一括実行する。
+' アクティブシートの期間設定を基準に、成形関連の全マクロを一括実行する。
 '
 ' 実行対象マクロ：
-' - 転記_廃棄_加工H
-' - 転記_手直し_加工T
-' - 転記_流出_加工G
-' - 転記_日報_加工NW
-' - 転記_統合_加工P
+' - 転記_日報_成形N
+' - 転記_日報_成形ND
+' - 転記_手直し_成形T
+' - 転記_流出_成形G
+' - 転記_日報_成形NW
+' - 転記_廃棄_成形H
+' - 転記_統合_成形P
 '
 ' 処理フロー：
 ' 1. アクティブシートの期間テーブル読み込み
-' 2. 各加工シートの期間テーブルをアクティブシートに合わせる
+' 2. 各成形シートの期間テーブルをアクティブシートに合わせる
 '    - 期間データをコピー（入る分だけ）
 '    - 余分な行は空白にクリア（行の挿入・削除なし）
 ' 3. 各マクロを順次実行
 ' 4. エラー時は即座に中断
 ' ============================================
 
-Sub 転記_加工一括()
-    Application.StatusBar = "加工一括転記を開始します..."
+Sub 転記_成形一括()
+    Application.StatusBar = "成形一括転記を開始します..."
 
     On Error GoTo ErrorHandler
 
@@ -39,7 +41,7 @@ Sub 転記_加工一括()
     ' ListObjectsから"_集計期間"で始まるテーブルを検索
     Dim tbl As ListObject
     For Each tbl In wsActive.ListObjects
-        If Left(tbl.Name, 5) = "_集計期間" Then
+        If left(tbl.Name, 5) = "_集計期間" Then
             Set tblPeriod = tbl
             Exit For
         End If
@@ -81,8 +83,8 @@ Sub 転記_加工一括()
     ' ============================================
     Dim targetSheets As Variant
     Dim targetTables As Variant
-    targetSheets = Array("加工H", "加工T", "加工G", "加工NW", "加工P")
-    targetTables = Array("_集計期間加工H", "_集計期間加工T", "_集計期間加工G", "_集計期間日報加工W", "_集計期間加工P")
+    targetSheets = Array("成形N", "成形ND", "成形T", "成形G", "成形NW", "成形H", "成形P")
+    targetTables = Array("_集計期間日報成形", "_集計期間日報成形D", "_集計期間成形T", "_集計期間成形G", "_集計期間日報成形W", "_集計期間成形H", "_集計期間成形P")
 
     ' ============================================
     ' 4. 各テーブルをアクティブシートの期間構成に同期
@@ -144,7 +146,7 @@ Sub 転記_加工一括()
     ' 5. 各マクロを順次実行
     ' ============================================
     Dim macroNames As Variant
-    macroNames = Array("転記_廃棄_加工H", "転記_手直し_加工T", "転記_流出_加工G", "転記_日報_加工NW", "転記_統合_加工P")
+    macroNames = Array("転記_日報_成形N", "転記_日報_成形ND", "転記_手直し_成形T", "転記_流出_成形G", "転記_日報_成形NW", "転記_廃棄_成形H", "転記_統合_成形P")
 
     For i = LBound(macroNames) To UBound(macroNames)
         Application.StatusBar = "実行中: " & macroNames(i) & " (" & (i + 1) & "/" & (UBound(macroNames) + 1) & ")"
@@ -154,7 +156,7 @@ Sub 転記_加工一括()
         On Error GoTo ErrorHandler
     Next i
 
-    Application.StatusBar = "加工一括転記が完了しました"
+    Application.StatusBar = "成形一括転記が完了しました"
     GoTo Cleanup
 
 MacroError:
