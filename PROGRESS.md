@@ -1,10 +1,42 @@
 # プロジェクト進捗状況
 
 ## 現在の状態
-- **最終更新**: 2026-01-12 17:58
-- **アクティブタスク**: なし（継続的なマクロ開発・保守）
+- **最終更新**: 2026-01-21 09:36
+- **アクティブタスク**: なし（全タスク完了）
 
-## 完了済み
+## 進行中
+- なし
+
+## 完了済み（今回セッション）
+- [x] UserForm5 ID範囲指定対応（22-25 → 22,23,24,25）
+- [x] UserForm5 DataModifiedフラグ追加（クエリ更新判定用）
+- [x] UserForm5 削除モード対応（データ無効化、実行後フォーム閉じる）
+- [x] mゾーン別データ転送ADO.bas - 品番末尾・注番月フィールド削除
+- [x] mクエリ西暦更新.bas - 新規作成（Power Query接続先を動的変更）
+- [x] 不良集計ゾーン別ADO.pq - 年間DBのみ参照に変更
+- [x] m自動採番リセットAccess.bas - DBパス動的構築対応
+
+## 完了済み（前回セッション）
+- [x] UserForm5 レイアウト微調整
+- [x] UserForm5 入力制限追加（CTextBoxEventクラスハンドラ接続）
+- [x] UserForm5 フォント設定（Meiryo UI, Yu Gothic UI）
+- [x] UserForm5 ID欄の窪み対応
+- [x] UserForm5 選択列削除
+- [x] UserForm5 TabIndex設定
+- [x] UserForm5 誤操作防止
+
+## 完了済み（前回セッション）
+- [x] UserForm2から品番末尾（ComboBox3）と注番月（TextBox2）を削除
+- [x] CTextBoxEvent.clsからMonthタグ処理を削除
+- [x] mゾーン別データ転送ADO.basから品番末尾・注番月フィールドを削除
+- [x] UserForm5（データ修正・削除フォーム）新規作成
+  - IDベースでAccessデータを検索・修正・削除
+  - トグルボタンで修正/削除モード切替
+  - 動的コントロール生成（ヘッダーラベルも動的）
+  - 最大10件同時処理対応
+  - トランザクション制御（エラー時ロールバック）
+
+## 完了済み（過去）
 - [x] VBAマクロ開発基盤（src/macros分離、bas2sjis変換スクリプト）
 - [x] PermissionRequestフック削除（MCPツール不使用のため簡素化）
 - [x] Plan Mode運用ルール策定（CLAUDE.mdに追記）
@@ -37,27 +69,18 @@
 - なし
 
 ## 次セッションへの引き継ぎ
-- **次のアクション**: バックグラウンド開発＋スキル並列発動の実験
-  - labで検証済み: `claude -p "..." --allowedTools "..." &` でバックグラウンド実行可能
-  - スキル発動方法: プロンプトに「まず ~/.claude/skills/excel-vba-expert.md を読んでから」を含める
-  - 試したいこと: 複数マクロを並列生成（メインで計画→裏に振る→コンテキスト節約）
-  - 参考: lab/docs/hook-analysis-report.md（バックグラウンド生成サンプル）
+- **UserForm5は完成**: テスト後、本番運用開始
+- **転送・クエリ関連マクロ更新済み**: 品番末尾・注番月削除対応、西暦動的変更対応
+- **自動採番リセット**: DBパス動的構築対応済み、コマンドボタン不要（マクロダイアログから実行）
 - **重要な発見**:
   - **文字コード**: inboxファイルはShift-JIS（必ずiconvで変換してから読む）
-  - **Plan Mode**: 調査は直接実行（iconv）、サブエージェント不要
-  - **設定変更**: Delegateモードはplanモード併用不可のため、allowリスト方式で運用
-  - **空欄処理修正パターン**: `If Len(xxx) > 0 Then`を削除して`If Len(xxx) = 0 Then xxx = "（空白）"`を追加する際、対応する`End If`も削除すること
-  - **項目フィルター**: カンマ区切りで複数値指定可能（OR条件）
-  - **イベントコード方式**: Workbook_SheetChangeは全シートで発火するため、異なる書式のシートがあるとエラーになる。各シートのWorksheet_Changeに分配する方式が安全
-  - **セッション終了**: `/wrap`コマンドでコミット・ログ・PROGRESS更新・push・クリーンアップを一括実行
-  - **.claude/rules/**: v2.0.64新機能。CLAUDE.mdを分割管理可能。番号プレフィックスで整理
+  - **動的コントロール**: ヘッダーラベルも動的生成にすると位置ズレ問題を解消できる
+  - **CTextBoxEvent接続**: 動的生成TextBoxにもクラスハンドラ配列で接続可能
 - **参照すべきリソース**:
-  - `.claude/rules/`（分割されたルールファイル）
-  - `docs/excel-knowledge/claude-code/EXCEL_MACRO_KNOWLEDGE_BASE.md`（実戦的ナレッジ）
-  - `docs/excel-knowledge/failures/001_activate_vs_screenupdating.md`（画面ちらつき問題）
-  - `logs/2025-12.md`（フィルターマクロ改修の詳細）
+  - `src/UserForm5.frm`（修正・削除フォームのコード）
+  - `src/mクエリ西暦更新.bas`（Power Query接続先変更）
+  - `src/m自動採番リセットAccess.bas`（ID振り直し）
 
 ## 直近のGitコミット
-- (pending) docs: Windows環境問題分析、ナレッジマージ、/vbaコマンド追加
-- 5aa0122 chore: PermissionRequestフック削除、ログ・進捗更新
-- 46eb227 feat: 項目追加マクロを全テーブル対応に拡張
+- 709e948 feat: 集計表転記マクロの不良関連転記先を変更
+- 47c1a2b docs: WezTerm + WSL環境設定のログ追加
