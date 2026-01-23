@@ -1,0 +1,9 @@
+# 流出不良集計ツール 依存ライブラリ
+pandas>=2.0.0
+pyodbc>=4.0.0
+xlwings>=0.30.0
+tkcalendar>=1.6.0
+Pillow>=9.0.0
+
+# 開発・ビルド用
+pyinstaller>=5.0.0
